@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -35,6 +36,7 @@ func (h *Handler) ListPosts(c *gin.Context) {
 	cacheKey := fmt.Sprintf("cache:posts:p%d:s%d:c%s:t%s", page, pageSize, category, tag)
 	var cached []models.Post
 	if h.stats.CacheGetJSON(c, cacheKey, &cached) {
+		c.Header("Cache-Control", "no-store")
 		c.JSON(http.StatusOK, gin.H{"items": cached, "cached": true})
 		return
 	}
@@ -50,12 +52,14 @@ func (h *Handler) ListPosts(c *gin.Context) {
 		ORDER BY p.created_at DESC
 		LIMIT $3 OFFSET $4`, category, tag, pageSize, (page-1)*pageSize)
 	if err != nil {
+		log.Printf("list posts failed page=%d page_size=%d category=%q tag=%q: %v", page, pageSize, category, tag, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "list posts failed"})
 		return
 	}
 	defer rows.Close()
 	posts := scanPosts(rows)
 	h.stats.CacheSetJSON(c, cacheKey, posts)
+	c.Header("Cache-Control", "no-store")
 	c.JSON(http.StatusOK, gin.H{"items": posts})
 }
 
@@ -64,6 +68,7 @@ func (h *Handler) GetPost(c *gin.Context) {
 	cacheKey := fmt.Sprintf("cache:post:%d", id)
 	var cached models.Post
 	if h.stats.CacheGetJSON(c, cacheKey, &cached) {
+		c.Header("Cache-Control", "no-store")
 		if !h.canReadPost(c, cached) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "post not found"})
 			return
@@ -74,6 +79,7 @@ func (h *Handler) GetPost(c *gin.Context) {
 	}
 	post, err := h.fetchPost(c, id)
 	if err != nil {
+		log.Printf("fetch post failed id=%d: %v", id, err)
 		c.JSON(http.StatusNotFound, gin.H{"error": "post not found"})
 		return
 	}
@@ -85,6 +91,7 @@ func (h *Handler) GetPost(c *gin.Context) {
 	if post.Status == "published" {
 		h.stats.CacheSetJSON(c, cacheKey, post)
 	}
+	c.Header("Cache-Control", "no-store")
 	c.JSON(http.StatusOK, post)
 }
 
@@ -92,15 +99,18 @@ func (h *Handler) CreatePost(c *gin.Context) {
 	userID := middleware.CurrentUserID(c)
 	var req postRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("create post bind failed user_id=%d: %v", userID, err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	post, err := h.savePost(c, userID, 0, req)
 	if err != nil {
+		log.Printf("create post failed user_id=%d title=%q slug=%q: %v", userID, req.Title, req.Slug, err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	h.afterMutation(c, userID, "post.created", gin.H{"id": post.ID})
+	h.afterMutation(c, userID, post.ID, "post.created", gin.H{"id": post.ID})
+	log.Printf("post created user_id=%d post_id=%d status=%q", userID, post.ID, post.Status)
 	c.JSON(http.StatusCreated, post)
 }
 
@@ -109,15 +119,18 @@ func (h *Handler) UpdatePost(c *gin.Context) {
 	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
 	var req postRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("update post bind failed user_id=%d post_id=%d: %v", userID, id, err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	post, err := h.savePost(c, userID, id, req)
 	if err != nil {
+		log.Printf("update post failed user_id=%d post_id=%d title=%q slug=%q: %v", userID, id, req.Title, req.Slug, err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	h.afterMutation(c, userID, "post.updated", gin.H{"id": post.ID})
+	h.afterMutation(c, userID, post.ID, "post.updated", gin.H{"id": post.ID})
+	log.Printf("post updated user_id=%d post_id=%d status=%q", userID, post.ID, post.Status)
 	c.JSON(http.StatusOK, post)
 }
 
@@ -126,10 +139,12 @@ func (h *Handler) DeletePost(c *gin.Context) {
 	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
 	tag, err := h.db.Exec(c, `DELETE FROM posts WHERE id=$1 AND user_id=$2`, id, userID)
 	if err != nil || tag.RowsAffected() == 0 {
+		log.Printf("delete post failed user_id=%d post_id=%d rows=%d err=%v", userID, id, tag.RowsAffected(), err)
 		c.JSON(http.StatusNotFound, gin.H{"error": "post not found"})
 		return
 	}
-	h.afterMutation(c, userID, "post.deleted", gin.H{"id": id})
+	h.afterMutation(c, userID, id, "post.deleted", gin.H{"id": id})
+	log.Printf("post deleted user_id=%d post_id=%d", userID, id)
 	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
@@ -248,8 +263,10 @@ func (h *Handler) canReadPost(c *gin.Context, post models.Post) bool {
 	return ok && userID == post.UserID
 }
 
-func (h *Handler) afterMutation(c *gin.Context, userID int64, event string, payload any) {
-	h.stats.InvalidatePosts(c, 0)
+func (h *Handler) afterMutation(c *gin.Context, userID int64, postID int64, event string, payload any) {
+	if err := h.stats.InvalidatePosts(c, postID); err != nil {
+		log.Printf("cache invalidation failed user_id=%d post_id=%d event=%s: %v", userID, postID, event, err)
+	}
 	h.stats.TouchActivity(c, userID, event, payload)
 	h.rebuildStats(c, userID)
 }
@@ -278,7 +295,9 @@ func (h *Handler) rebuildStats(c *gin.Context, userID int64) {
 			hotTags[strings.TrimSpace(name)] = count
 		}
 	}
-	_ = h.stats.RebuildUser(c, userID, counts, hotTags)
+	if err := h.stats.RebuildUser(c, userID, counts, hotTags); err != nil {
+		log.Printf("rebuild stats failed user_id=%d: %v", userID, err)
+	}
 }
 
 func (h *Handler) ProfileStats(c *gin.Context) {
@@ -286,5 +305,6 @@ func (h *Handler) ProfileStats(c *gin.Context) {
 	if current, ok := h.auth.UserID(c); ok {
 		userID = current
 	}
+	c.Header("Cache-Control", "no-store")
 	c.JSON(http.StatusOK, h.stats.Profile(c, userID))
 }
