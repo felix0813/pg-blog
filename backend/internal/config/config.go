@@ -1,10 +1,16 @@
+/*
+ * @Author: felix 1306332027@qq.com
+ * @Date: 2026-05-31 12:03:12
+ * @LastEditors: felix 1306332027@qq.com
+ * @LastEditTime: 2026-05-31 13:36:58
+ * @FilePath: \pg-blog\backend\internal\config\config.go
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ */
 package config
 
 import (
 	"os"
 	"strconv"
-
-	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -28,7 +34,6 @@ type Config struct {
 }
 
 func Load() Config {
-	_ = godotenv.Load("../.env", ".env")
 	return Config{
 		AppAddr:            env("APP_ADDR", ":8080"),
 		FrontendOrigin:     env("FRONTEND_ORIGIN", "http://localhost:5173"),
@@ -58,21 +63,19 @@ func env(key, fallback string) string {
 }
 
 func envInt(key string, fallback int) int {
-	value, err := strconv.Atoi(env(key, ""))
-	if err != nil {
-		return fallback
+	if value := os.Getenv(key); value != "" {
+		if intValue, err := strconv.Atoi(value); err == nil {
+			return intValue
+		}
 	}
-	return value
+	return fallback
 }
 
 func envBool(key string, fallback bool) bool {
-	value := env(key, "")
-	if value == "" {
-		return fallback
+	if value := os.Getenv(key); value != "" {
+		if boolValue, err := strconv.ParseBool(value); err == nil {
+			return boolValue
+		}
 	}
-	parsed, err := strconv.ParseBool(value)
-	if err != nil {
-		return fallback
-	}
-	return parsed
+	return fallback
 }
