@@ -44,12 +44,30 @@ func (h *Handler) ListPosts(c *gin.Context) {
 		viewerID = 0
 	}
 	cacheKey := fmt.Sprintf("cache:posts:v%d:p%d:s%d:c%s:t%s:st%s", viewerID, page, pageSize, category, tag, status)
-	var cached []models.Post
-	if h.stats.CacheGetJSON(c, cacheKey, &cached) {
+	var cachedResponse gin.H
+	if h.stats.CacheGetJSON(c, cacheKey, &cachedResponse) {
 		c.Header("Cache-Control", "no-store")
-		c.JSON(http.StatusOK, gin.H{"items": cached, "cached": true})
+		c.JSON(http.StatusOK, cachedResponse)
 		return
 	}
+
+	var totalCount int64
+	err := h.db.QueryRow(c, `
+		SELECT count(DISTINCT p.id)
+		FROM posts p
+		LEFT JOIN categories c ON c.id=p.category_id
+		LEFT JOIN post_tags pt ON pt.post_id=p.id
+		LEFT JOIN tags t ON t.id=pt.tag_id
+		WHERE (p.status='published' OR p.user_id=$1)
+		  AND ($2='' OR c.slug=$2)
+		  AND ($3='' OR t.slug=$3)
+		  AND ($4='' OR p.status=$4)`, viewerID, category, tag, status).Scan(&totalCount)
+	if err != nil {
+		log.Printf("count posts failed viewer_id=%d category=%q tag=%q status=%q: %v", viewerID, category, tag, status, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "list posts failed"})
+		return
+	}
+
 	rows, err := h.db.Query(c, `
 		SELECT DISTINCT p.id, p.user_id, p.category_id, p.title, p.slug, p.summary, p.status, p.content_html, p.oss_json_key, p.oss_html_key, p.view_count, p.published_at, p.created_at, p.updated_at
 		FROM posts p
@@ -69,9 +87,15 @@ func (h *Handler) ListPosts(c *gin.Context) {
 	}
 	defer rows.Close()
 	posts := scanPosts(rows)
-	h.stats.CacheSetJSON(c, cacheKey, posts)
+
+	response := gin.H{
+		"items":       posts,
+		"total_count": totalCount,
+		"has_more":    totalCount > int64(page*pageSize),
+	}
+	h.stats.CacheSetJSON(c, cacheKey, response)
 	c.Header("Cache-Control", "no-store")
-	c.JSON(http.StatusOK, gin.H{"items": posts})
+	c.JSON(http.StatusOK, response)
 }
 
 func (h *Handler) GetPost(c *gin.Context) {

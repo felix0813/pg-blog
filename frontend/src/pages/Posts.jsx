@@ -4,6 +4,7 @@ import { PostList } from '../components/PostList.jsx';
 
 export function Posts() {
   const [posts, setPosts] = React.useState([]);
+  const [hasMore, setHasMore] = React.useState(false);
   const [categories, setCategories] = React.useState([]);
   const [tags, setTags] = React.useState([]);
   const [filters, setFilters] = React.useState({ category: '', tag: '', status: '', page: 1 });
@@ -18,7 +19,13 @@ export function Posts() {
     if (filters.category) params.set('category', filters.category);
     if (filters.tag) params.set('tag', filters.tag);
     if (filters.status) params.set('status', filters.status);
-    get(`/api/posts?${params}`).then((data) => setPosts(data.items || [])).catch(() => setPosts([]));
+    get(`/api/posts?${params}`).then((data) => {
+      setPosts(data.items || []);
+      setHasMore(data.has_more || false);
+    }).catch(() => {
+      setPosts([]);
+      setHasMore(false);
+    });
   }, [filters]);
 
   return (
@@ -46,7 +53,7 @@ export function Posts() {
       <div className="pager">
         <button disabled={filters.page <= 1} onClick={() => setFilters({ ...filters, page: filters.page - 1 })}>上一页</button>
         <span>第 {filters.page} 页</span>
-        <button onClick={() => setFilters({ ...filters, page: filters.page + 1 })}>下一页</button>
+        <button disabled={!hasMore} onClick={() => setFilters({ ...filters, page: filters.page + 1 })}>下一页</button>
       </div>
     </section>
   );

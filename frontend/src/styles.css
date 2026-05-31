@@ -248,6 +248,21 @@ textarea { width: 100%; min-height: 92px; resize: vertical; }
 .tagPicker label { display: inline-flex; align-items: center; gap: 7px; }
 .tagPicker label.checked { border-color: var(--accent); background: var(--accentSoft); color: var(--accent); }
 
+.flexRow { display: flex; align-items: center; gap: 8px; }
+.tagAdd {
+  border: 1px dashed var(--line);
+  border-radius: 999px;
+  padding: 6px 14px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.tagAdd:hover { border-color: var(--accent); color: var(--accent); }
+
 .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; font-weight: 750; }
 .actions { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .danger { border-color: #c2410c; background: color-mix(in srgb, #c2410c 12%, var(--panelSolid)); color: #c2410c; }
