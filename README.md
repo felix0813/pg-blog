@@ -11,6 +11,12 @@ database/     PostgreSQL init.sql
 example.env   environment template
 ```
 
+## Prerequisites
+
+- Go 1.26 or newer.
+- Node.js and npm for the frontend.
+- PostgreSQL and Redis services.
+
 ## Quick Start
 
 1. Create `.env` from `example.env` and fill secrets.
@@ -39,14 +45,6 @@ npm run dev
 
 Frontend defaults to `http://localhost:5173`, backend to `http://localhost:8080`.
 
-Docker Compose alternative:
-
-```bash
-cp example.env .env
-docker compose up --build
-```
-
-Compose starts PostgreSQL, Redis, backend and an Nginx-served frontend. The frontend is exposed on `http://localhost:5173`.
 
 ## Configuration
 
@@ -135,7 +133,7 @@ Passwords are hashed with bcrypt. Back up PostgreSQL regularly using `pg_dump`, 
 
 Recommended production deployment:
 
-- Build frontend with `npm run build` and serve `frontend/dist` through Nginx or object storage.
+- Build frontend with `npm run build` and serve `frontend/dist` through a static-file service or object storage.
 - Run the Go backend behind HTTPS.
 - Keep PostgreSQL, Redis and OSS credentials in environment secrets.
 - Run `database/init.sql` once, then manage schema changes through migrations.

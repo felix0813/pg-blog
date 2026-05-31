@@ -1,6 +1,6 @@
 module pg-blog/backend
 
-go 1.22
+go 1.26
 
 require (
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.10+incompatible
