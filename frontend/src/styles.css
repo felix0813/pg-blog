@@ -220,6 +220,21 @@ textarea { width: 100%; min-height: 92px; resize: vertical; }
   background: color-mix(in srgb, var(--panelSolid) 72%, transparent);
 }
 .postTitle { font-size: 19px; font-weight: 800; letter-spacing: -0.02em; }
+.postTitleLine { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: var(--panelSolid);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+.statusBadge.published { border-color: color-mix(in srgb, var(--accent) 42%, var(--line)); background: var(--accentSoft); color: var(--accent); }
+.statusBadge.draft { border-color: #d6a546; background: color-mix(in srgb, #d6a546 16%, var(--panelSolid)); color: #94670c; }
+.statusBadge.archived { border-color: #8d96a3; background: color-mix(in srgb, #8d96a3 16%, var(--panelSolid)); color: var(--muted); }
 
 .tagCloud { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 24px; }
 .tagCloud span, .tagPicker label {
@@ -234,6 +249,8 @@ textarea { width: 100%; min-height: 92px; resize: vertical; }
 .tagPicker label.checked { border-color: var(--accent); background: var(--accentSoft); color: var(--accent); }
 
 .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; font-weight: 750; }
+.actions { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.danger { border-color: #c2410c; background: color-mix(in srgb, #c2410c 12%, var(--panelSolid)); color: #c2410c; }
 .primary { background: var(--accent); color: var(--accentText); border-color: var(--accent); }
 
 .article { max-width: 820px; margin: auto; }
