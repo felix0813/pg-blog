@@ -33,7 +33,17 @@ func (h *Handler) ListPosts(c *gin.Context) {
 	pageSize := intParam(c, "page_size", 10)
 	category := c.Query("category")
 	tag := c.Query("tag")
-	cacheKey := fmt.Sprintf("cache:posts:p%d:s%d:c%s:t%s", page, pageSize, category, tag)
+	status := c.Query("status")
+	if status != "" && !isValidPostStatus(status) {
+		log.Printf("list posts invalid status=%q", status)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid post status"})
+		return
+	}
+	viewerID, authenticated := h.auth.UserID(c)
+	if !authenticated {
+		viewerID = 0
+	}
+	cacheKey := fmt.Sprintf("cache:posts:v%d:p%d:s%d:c%s:t%s:st%s", viewerID, page, pageSize, category, tag, status)
 	var cached []models.Post
 	if h.stats.CacheGetJSON(c, cacheKey, &cached) {
 		c.Header("Cache-Control", "no-store")
@@ -46,13 +56,14 @@ func (h *Handler) ListPosts(c *gin.Context) {
 		LEFT JOIN categories c ON c.id=p.category_id
 		LEFT JOIN post_tags pt ON pt.post_id=p.id
 		LEFT JOIN tags t ON t.id=pt.tag_id
-		WHERE p.status='published'
-		  AND ($1='' OR c.slug=$1)
-		  AND ($2='' OR t.slug=$2)
+		WHERE (p.status='published' OR p.user_id=$1)
+		  AND ($2='' OR c.slug=$2)
+		  AND ($3='' OR t.slug=$3)
+		  AND ($4='' OR p.status=$4)
 		ORDER BY p.created_at DESC
-		LIMIT $3 OFFSET $4`, category, tag, pageSize, (page-1)*pageSize)
+		LIMIT $5 OFFSET $6`, viewerID, category, tag, status, pageSize, (page-1)*pageSize)
 	if err != nil {
-		log.Printf("list posts failed page=%d page_size=%d category=%q tag=%q: %v", page, pageSize, category, tag, err)
+		log.Printf("list posts failed viewer_id=%d page=%d page_size=%d category=%q tag=%q status=%q: %v", viewerID, page, pageSize, category, tag, status, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "list posts failed"})
 		return
 	}
@@ -151,7 +162,10 @@ func (h *Handler) DeletePost(c *gin.Context) {
 func (h *Handler) savePost(c *gin.Context, userID int64, postID int64, req postRequest) (models.Post, error) {
 	status := req.Status
 	if status == "" {
-		status = "draft"
+		status = "published"
+	}
+	if !isValidPostStatus(status) {
+		return models.Post{}, fmt.Errorf("invalid post status")
 	}
 	cleanHTML := h.policy.Sanitize(req.ContentHTML)
 	if !json.Valid(req.ContentJSON) {
@@ -232,6 +246,15 @@ func (h *Handler) fetchPost(c *gin.Context, id int64) (models.Post, error) {
 		}
 	}
 	return post, nil
+}
+
+func isValidPostStatus(status string) bool {
+	switch status {
+	case "draft", "published", "archived":
+		return true
+	default:
+		return false
+	}
 }
 
 func scanPosts(rows pgx.Rows) []models.Post {

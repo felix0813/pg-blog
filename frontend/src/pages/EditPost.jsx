@@ -14,7 +14,7 @@ export function EditPost() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isNew = id === 'new';
-  const [meta, setMeta] = React.useState({ title: '', slug: '', summary: '', status: 'draft', category_id: '', tag_ids: [] });
+  const [meta, setMeta] = React.useState({ title: '', slug: '', summary: '', status: 'published', category_id: '', tag_ids: [] });
   const [categories, setCategories] = React.useState([]);
   const [tags, setTags] = React.useState([]);
   const [message, setMessage] = React.useState('');
@@ -120,8 +120,8 @@ export function EditPost() {
         <input placeholder="标题" value={meta.title} onChange={(e) => setMeta({ ...meta, title: e.target.value })} />
         <input placeholder="slug" value={meta.slug} onChange={(e) => setMeta({ ...meta, slug: e.target.value })} />
         <select value={meta.status} onChange={(e) => setMeta({ ...meta, status: e.target.value })}>
-          <option value="draft">草稿</option>
           <option value="published">发布</option>
+          <option value="draft">草稿</option>
           <option value="archived">归档</option>
         </select>
         <select value={meta.category_id} onChange={(e) => setMeta({ ...meta, category_id: e.target.value })}>
