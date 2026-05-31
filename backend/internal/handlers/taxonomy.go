@@ -46,7 +46,7 @@ func (h *Handler) CreateCategory(c *gin.Context) {
 		c.JSON(http.StatusConflict, gin.H{"error": "category exists"})
 		return
 	}
-	h.afterMutation(c, userID, "category.created", item)
+	h.afterMutation(c, userID, 0, "category.created", item)
 	c.JSON(http.StatusCreated, item)
 }
 
@@ -63,7 +63,7 @@ func (h *Handler) UpdateCategory(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "category not found"})
 		return
 	}
-	h.afterMutation(c, userID, "category.updated", gin.H{"id": id})
+	h.afterMutation(c, userID, 0, "category.updated", gin.H{"id": id})
 	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
@@ -104,7 +104,7 @@ func (h *Handler) CreateTag(c *gin.Context) {
 		c.JSON(http.StatusConflict, gin.H{"error": "tag exists"})
 		return
 	}
-	h.afterMutation(c, userID, "tag.created", item)
+	h.afterMutation(c, userID, 0, "tag.created", item)
 	c.JSON(http.StatusCreated, item)
 }
 
@@ -121,7 +121,7 @@ func (h *Handler) UpdateTag(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "tag not found"})
 		return
 	}
-	h.afterMutation(c, userID, "tag.updated", gin.H{"id": id})
+	h.afterMutation(c, userID, 0, "tag.updated", gin.H{"id": id})
 	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
@@ -138,6 +138,6 @@ func (h *Handler) deleteTaxonomy(c *gin.Context, table string, event string) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "item not found"})
 		return
 	}
-	h.afterMutation(c, userID, event, gin.H{"id": id})
+	h.afterMutation(c, userID, 0, event, gin.H{"id": id})
 	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
