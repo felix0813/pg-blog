@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { post } from '../lib/api.js';
 
-export function Login({ mode }) {
+export function Login({ mode, onAuth }) {
   const navigate = useNavigate();
   const isRegister = mode === 'register';
   const [form, setForm] = React.useState({ username: '', email: '', password: '' });
@@ -12,7 +12,8 @@ export function Login({ mode }) {
     e.preventDefault();
     setError('');
     try {
-      await post(isRegister ? '/register' : '/login', form);
+      const data = await post(isRegister ? '/register' : '/login', form);
+      onAuth?.(data.user);
       navigate('/');
     } catch (err) {
       setError(err.message);

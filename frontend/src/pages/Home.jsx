@@ -3,7 +3,7 @@ import { get } from '../lib/api.js';
 import { StatStrip } from '../components/StatStrip.jsx';
 import { PostList } from '../components/PostList.jsx';
 
-export function Home() {
+export function Home({ user }) {
   const [stats, setStats] = React.useState(null);
   const [posts, setPosts] = React.useState([]);
 
@@ -15,9 +15,9 @@ export function Home() {
   return (
     <section className="profileLayout">
       <aside className="profilePanel">
-        <div className="avatar">PB</div>
-        <h1>个人主页</h1>
-        <p>记录日常开发、问题复盘和长期维护的技术笔记。</p>
+        {user?.avatar_url ? <img className="avatar imageAvatar" src={user.avatar_url} alt="头像" /> : <div className="avatar">{(user?.display_name || user?.username || 'PB').slice(0, 2).toUpperCase()}</div>}
+        <h1>{user?.display_name || '个人主页'}</h1>
+        <p>{user?.bio || '记录日常开发、问题复盘和长期维护的技术笔记。'}</p>
         <StatStrip stats={stats} />
       </aside>
       <section className="contentPanel">

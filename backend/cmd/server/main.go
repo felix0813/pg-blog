@@ -60,6 +60,8 @@ func main() {
 
 	private := api.Group("")
 	private.Use(auth.Require())
+	private.GET("/me", h.Me)
+	private.PUT("/me", h.UpdateMe)
 	private.POST("/posts", h.CreatePost)
 	private.PUT("/posts/:id", h.UpdatePost)
 	private.DELETE("/posts/:id", h.DeletePost)

@@ -2,7 +2,7 @@
  * @Author: felix 1306332027@qq.com
  * @Date: 2026-05-31 12:03:12
  * @LastEditors: felix 1306332027@qq.com
- * @LastEditTime: 2026-05-31 13:11:41
+ * @LastEditTime: 2026-05-31 13:38:31
  * @FilePath: \pg-blog\backend\internal\handlers\auth.go
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -11,7 +11,9 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"strings"
 
+	"pg-blog/backend/internal/middleware"
 	"pg-blog/backend/internal/models"
 
 	"github.com/gin-gonic/gin"
@@ -24,10 +26,16 @@ type authRequest struct {
 	Password string `json:"password" binding:"required,min=8"`
 }
 
+type profileRequest struct {
+	DisplayName string `json:"display_name"`
+	Bio         string `json:"bio"`
+	AvatarURL   string `json:"avatar_url"`
+}
+
 func (h *Handler) Register(c *gin.Context) {
 	var req authRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		log.Printf("Register bind error: %v", err)
+		log.Printf("register bind failed: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -35,7 +43,7 @@ func (h *Handler) Register(c *gin.Context) {
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		log.Printf("Password hash failed: %v", err)
+		log.Printf("register password hash failed for username=%q: %v", req.Username, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "password hash failed"})
 		return
 	}
@@ -48,25 +56,24 @@ func (h *Handler) Register(c *gin.Context) {
 		req.Username, req.Email, string(hash),
 	).Scan(&user.ID, &user.Username, &user.Email, &user.DisplayName, &user.Bio, &user.AvatarURL, &user.CreatedAt)
 	if err != nil {
-		log.Printf("User registration failed: %v", err)
+		log.Printf("register insert failed for username=%q email=%q: %v", req.Username, req.Email, err)
 		c.JSON(http.StatusConflict, gin.H{"error": "username or email already exists"})
 		return
 	}
 
 	if err := h.auth.Issue(c, user.ID); err != nil {
-		log.Printf("Token issue failed: %v", err)
+		log.Printf("register issue token failed for user_id=%d: %v", user.ID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "token issue failed"})
 		return
 	}
-
-	log.Printf("User registered successfully: %s", req.Username)
+	log.Printf("user registered user_id=%d username=%q", user.ID, user.Username)
 	c.JSON(http.StatusCreated, gin.H{"user": user})
 }
 
 func (h *Handler) Login(c *gin.Context) {
 	var req authRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		log.Printf("Login bind error: %v", err)
+		log.Printf("login bind failed: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -80,18 +87,17 @@ func (h *Handler) Login(c *gin.Context) {
 		req.Username,
 	).Scan(&user.ID, &user.Username, &user.Email, &hash, &user.DisplayName, &user.Bio, &user.AvatarURL, &user.CreatedAt)
 	if err != nil || bcrypt.CompareHashAndPassword([]byte(hash), []byte(req.Password)) != nil {
-		log.Printf("Invalid login credentials for user: %s", req.Username)
+		log.Printf("login rejected for username=%q", req.Username)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid username or password"})
 		return
 	}
 
 	if err := h.auth.Issue(c, user.ID); err != nil {
-		log.Printf("Token issue failed: %v", err)
+		log.Printf("login issue token failed for user_id=%d: %v", user.ID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "token issue failed"})
 		return
 	}
-
-	log.Printf("User logged in successfully: %s", req.Username)
+	log.Printf("user logged in user_id=%d username=%q", user.ID, user.Username)
 	c.JSON(http.StatusOK, gin.H{"user": user})
 }
 
@@ -100,4 +106,53 @@ func (h *Handler) Logout(c *gin.Context) {
 	h.auth.Clear(c)
 	log.Println("User logged out successfully")
 	c.JSON(http.StatusOK, gin.H{"ok": true})
+}
+
+func (h *Handler) Me(c *gin.Context) {
+	userID := middleware.CurrentUserID(c)
+	user, err := h.fetchUser(c, userID)
+	if err != nil {
+		log.Printf("fetch current user failed user_id=%d: %v", userID, err)
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+	c.Header("Cache-Control", "no-store")
+	c.JSON(http.StatusOK, gin.H{"user": user})
+}
+
+func (h *Handler) UpdateMe(c *gin.Context) {
+	userID := middleware.CurrentUserID(c)
+	var req profileRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("update profile bind failed user_id=%d: %v", userID, err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	displayName := strings.TrimSpace(req.DisplayName)
+	bio := strings.TrimSpace(req.Bio)
+	avatarURL := strings.TrimSpace(req.AvatarURL)
+	var user models.User
+	err := h.db.QueryRow(c, `
+		UPDATE users SET display_name=$1, bio=$2, avatar_url=$3
+		WHERE id=$4
+		RETURNING id, username, email, display_name, bio, avatar_url, created_at`, displayName, bio, avatarURL, userID).
+		Scan(&user.ID, &user.Username, &user.Email, &user.DisplayName, &user.Bio, &user.AvatarURL, &user.CreatedAt)
+	if err != nil {
+		log.Printf("update profile failed user_id=%d: %v", userID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "update profile failed"})
+		return
+	}
+	h.stats.TouchActivity(c, userID, "profile.updated", gin.H{"id": userID})
+	log.Printf("profile updated user_id=%d", userID)
+	c.Header("Cache-Control", "no-store")
+	c.JSON(http.StatusOK, gin.H{"user": user})
+}
+
+func (h *Handler) fetchUser(c *gin.Context, userID int64) (models.User, error) {
+	var user models.User
+	err := h.db.QueryRow(c, `
+		SELECT id, username, email, display_name, bio, avatar_url, created_at
+		FROM users WHERE id=$1`, userID).
+		Scan(&user.ID, &user.Username, &user.Email, &user.DisplayName, &user.Bio, &user.AvatarURL, &user.CreatedAt)
+	return user, err
 }

@@ -74,14 +74,32 @@ func (s *Stats) CacheGetJSON(ctx context.Context, key string, value any) bool {
 	return json.Unmarshal(body, value) == nil
 }
 
-func (s *Stats) InvalidatePosts(ctx context.Context, postID int64) {
+func (s *Stats) InvalidatePosts(ctx context.Context, postID int64) error {
 	iter := s.rdb.Scan(ctx, 0, "cache:posts:*", 100).Iterator()
 	for iter.Next(ctx) {
-		_ = s.rdb.Del(ctx, iter.Val()).Err()
+		if err := s.rdb.Del(ctx, iter.Val()).Err(); err != nil {
+			return err
+		}
+	}
+	if err := iter.Err(); err != nil {
+		return err
 	}
 	if postID > 0 {
-		_ = s.rdb.Del(ctx, fmt.Sprintf("cache:post:%d", postID)).Err()
+		if err := s.rdb.Del(ctx, fmt.Sprintf("cache:post:%d", postID)).Err(); err != nil {
+			return err
+		}
+		return nil
 	}
+	detailIter := s.rdb.Scan(ctx, 0, "cache:post:*", 100).Iterator()
+	for detailIter.Next(ctx) {
+		if err := s.rdb.Del(ctx, detailIter.Val()).Err(); err != nil {
+			return err
+		}
+	}
+	if err := detailIter.Err(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *Stats) Profile(ctx context.Context, userID int64) map[string]any {
