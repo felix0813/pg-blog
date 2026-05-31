@@ -1,0 +1,10 @@
+.env
+.DS_Store
+node_modules/
+dist/
+coverage/
+*.log
+backend/bin/
+backend/.gocache/
+backend/.gomodcache/
+frontend/.vite/

@@ -1,0 +1,46 @@
+import React from 'react';
+import { get } from '../lib/api.js';
+import { PostList } from '../components/PostList.jsx';
+
+export function Posts() {
+  const [posts, setPosts] = React.useState([]);
+  const [categories, setCategories] = React.useState([]);
+  const [tags, setTags] = React.useState([]);
+  const [filters, setFilters] = React.useState({ category: '', tag: '', page: 1 });
+
+  React.useEffect(() => {
+    get('/api/categories').then((data) => setCategories(data.items || []));
+    get('/api/tags').then((data) => setTags(data.items || []));
+  }, []);
+
+  React.useEffect(() => {
+    const params = new URLSearchParams({ page: String(filters.page), page_size: '10' });
+    if (filters.category) params.set('category', filters.category);
+    if (filters.tag) params.set('tag', filters.tag);
+    get(`/api/posts?${params}`).then((data) => setPosts(data.items || [])).catch(() => setPosts([]));
+  }, [filters]);
+
+  return (
+    <section>
+      <div className="sectionHeader">
+        <h1>文章列表</h1>
+        <div className="filters">
+          <select value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value, page: 1 })}>
+            <option value="">全部分类</option>
+            {categories.map((item) => <option key={item.id} value={item.slug}>{item.name}</option>)}
+          </select>
+          <select value={filters.tag} onChange={(e) => setFilters({ ...filters, tag: e.target.value, page: 1 })}>
+            <option value="">全部标签</option>
+            {tags.map((item) => <option key={item.id} value={item.slug}>{item.name}</option>)}
+          </select>
+        </div>
+      </div>
+      <PostList posts={posts} />
+      <div className="pager">
+        <button disabled={filters.page <= 1} onClick={() => setFilters({ ...filters, page: filters.page - 1 })}>上一页</button>
+        <span>第 {filters.page} 页</span>
+        <button onClick={() => setFilters({ ...filters, page: filters.page + 1 })}>下一页</button>
+      </div>
+    </section>
+  );
+}
