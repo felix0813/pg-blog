@@ -89,13 +89,9 @@ textarea { width: 100%; min-height: 92px; resize: vertical; }
   letter-spacing: -0.02em;
 }
 
-.brand::before {
-  content: "";
-  width: 13px;
-  height: 13px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 6px var(--accentSoft);
+.brandIcon {
+  color: var(--accent);
+  filter: drop-shadow(0 0 8px var(--accentSoft));
 }
 
 .topbar nav {
