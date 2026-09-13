@@ -1,7 +1,7 @@
-const basePath = import.meta.env.BASE_URL.replace(/\/$/, '')
+const baseURL = '/myblog'
 
 export async function api(path, options = {}) {
-  const res = await fetch(`${basePath}${path}`, {
+  const res = await fetch(`${baseURL}${path}`, {
     credentials: 'include',
     cache: 'no-store',
     headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
