@@ -1,5 +1,7 @@
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, '')
+
 export async function api(path, options = {}) {
-  const res = await fetch(path, {
+  const res = await fetch(`${basePath}${path}`, {
     credentials: 'include',
     cache: 'no-store',
     headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
@@ -7,9 +9,7 @@ export async function api(path, options = {}) {
   });
   const text = await res.text();
   const data = text ? JSON.parse(text) : null;
-  if (!res.ok) {
-    throw new Error(data?.error || res.statusText);
-  }
+  if (!res.ok) throw new Error(data?.error || res.statusText);
   return data;
 }
 
