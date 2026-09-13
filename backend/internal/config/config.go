@@ -14,44 +14,52 @@ import (
 )
 
 type Config struct {
-	AppAddr            string
-	FrontendOrigin     string
-	DatabaseURL        string
-	RedisAddr          string
-	RedisPassword      string
-	RedisDB            int
-	JWTSecret          string
-	CookieName         string
-	CookieDomain       string
-	CookieSecure       bool
-	CookieSameSite     string
-	OSSEnabled         bool
-	OSSEndpoint        string
-	OSSBucket          string
-	OSSAccessKeyID     string
-	OSSAccessKeySecret string
-	OSSPrefix          string
+	AppAddr             string
+	FrontendOrigin      string
+	DatabaseURL         string
+	RedisAddr           string
+	RedisPassword       string
+	RedisDB             int
+	JWTSecret           string
+	CookieName          string
+	CookieDomain        string
+	CookieSecure        bool
+	CookieSameSite      string
+	OSSEnabled          bool
+	OSSEndpoint         string
+	OSSBucket           string
+	OSSAccessKeyID      string
+	OSSAccessKeySecret  string
+	OSSPrefix           string
+	DashScopeAPIKey     string
+	DashScopeBaseURL    string
+	EmbeddingModel      string
+	EmbeddingDimensions int
 }
 
 func Load() Config {
 	return Config{
-		AppAddr:            env("APP_ADDR", ":8080"),
-		FrontendOrigin:     env("FRONTEND_ORIGIN", "http://localhost:5173"),
-		DatabaseURL:        env("DATABASE_URL", "postgres://postgres:wzf_0813@192.168.192.1:5432/pg_blog_dev?sslmode=disable"),
-		RedisAddr:          env("REDIS_ADDR", "192.168.192.3:6379"),
-		RedisPassword:      env("REDIS_PASSWORD", "redis_wzf_0813"),
-		RedisDB:            envInt("REDIS_DB", 0),
-		JWTSecret:          env("JWT_SECRET", "weizhuofei_postgresql_blog_secret_key"),
-		CookieName:         env("COOKIE_NAME", "pg_blog_token"),
-		CookieDomain:       env("COOKIE_DOMAIN", ""),
-		CookieSecure:       envBool("COOKIE_SECURE", false),
-		CookieSameSite:     env("COOKIE_SAME_SITE", "Lax"),
-		OSSEnabled:         envBool("OSS_ENABLED", false),
-		OSSEndpoint:        env("OSS_ENDPOINT", ""),
-		OSSBucket:          env("OSS_BUCKET", ""),
-		OSSAccessKeyID:     env("OSS_ACCESS_KEY_ID", ""),
-		OSSAccessKeySecret: env("OSS_ACCESS_KEY_SECRET", ""),
-		OSSPrefix:          env("OSS_PREFIX", "pg-blog"),
+		AppAddr:             env("APP_ADDR", ":8080"),
+		FrontendOrigin:      env("FRONTEND_ORIGIN", "http://localhost:5173"),
+		DatabaseURL:         env("DATABASE_URL", "postgres://postgres:wzf_0813@192.168.192.1:5432/pg_blog_dev?sslmode=disable"),
+		RedisAddr:           env("REDIS_ADDR", "192.168.192.3:6379"),
+		RedisPassword:       env("REDIS_PASSWORD", "redis_wzf_0813"),
+		RedisDB:             envInt("REDIS_DB", 0),
+		JWTSecret:           env("JWT_SECRET", "weizhuofei_postgresql_blog_secret_key"),
+		CookieName:          env("COOKIE_NAME", "pg_blog_token"),
+		CookieDomain:        env("COOKIE_DOMAIN", ""),
+		CookieSecure:        envBool("COOKIE_SECURE", false),
+		CookieSameSite:      env("COOKIE_SAME_SITE", "Lax"),
+		OSSEnabled:          envBool("OSS_ENABLED", false),
+		OSSEndpoint:         env("OSS_ENDPOINT", ""),
+		OSSBucket:           env("OSS_BUCKET", ""),
+		OSSAccessKeyID:      env("OSS_ACCESS_KEY_ID", ""),
+		OSSAccessKeySecret:  env("OSS_ACCESS_KEY_SECRET", ""),
+		OSSPrefix:           env("OSS_PREFIX", "pg-blog"),
+		DashScopeAPIKey:     env("DASHSCOPE_API_KEY", ""),
+		DashScopeBaseURL:    env("DASHSCOPE_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"),
+		EmbeddingModel:      env("EMBEDDING_MODEL", "qwen3.7-text-embedding"),
+		EmbeddingDimensions: envInt("EMBEDDING_DIMENSIONS", 1024),
 	}
 }
 

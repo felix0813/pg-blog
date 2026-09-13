@@ -8,6 +8,7 @@ export function PostDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [post, setPost] = React.useState(null)
+  const [related, setRelated] = React.useState([])
   const [error, setError] = React.useState('')
 
   React.useEffect(() => {
@@ -16,6 +17,8 @@ export function PostDetail() {
       .then(setPost)
       .catch((err) => setError(err.message))
   }, [id])
+  React.useEffect(() => { get("/api/posts/" + id + "/related?limit=6").then((data) => setRelated(data.items || [])).catch(() => setRelated([])) }, [id])
+
 
   async function deletePost() {
     if (!window.confirm('确定删除这篇文章吗？')) return
@@ -71,6 +74,19 @@ export function PostDetail() {
           __html: DOMPurify.sanitize(post.content_html || ''),
         }}
       />
+      {related.length > 0 && (
+        <section className="relatedPosts">
+          <h2>相关文章</h2>
+          <div className="relatedGrid">
+            {related.map((item) => (
+              <Link className="relatedCard" key={item.id} to={"/post/" + item.id}>
+                <strong>{item.title}</strong>
+                <span>{item.summary || "继续阅读"}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </article>
   )
 }

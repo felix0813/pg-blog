@@ -11,6 +11,7 @@ import (
 	"pg-blog/backend/internal/db"
 	"pg-blog/backend/internal/handlers"
 	"pg-blog/backend/internal/middleware"
+	"pg-blog/backend/internal/search"
 	"pg-blog/backend/internal/storage"
 
 	"github.com/gin-contrib/cors"
@@ -36,6 +37,7 @@ func main() {
 	stats := cache.NewStats(redisClient)
 	auth := middleware.NewAuth(cfg)
 	h := handlers.New(pool, stats, ossStore, auth)
+	go search.NewWorker(pool, cfg).Run(context.Background())
 
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
@@ -54,6 +56,8 @@ func main() {
 	api := r.Group("/api")
 	api.GET("/posts", h.ListPosts)
 	api.GET("/posts/:id", h.GetPost)
+	api.GET("/posts/:id/related", h.SemanticRelatedPosts)
+	api.GET("/search", h.Search)
 	api.GET("/categories", h.ListCategories)
 	api.GET("/tags", h.ListTags)
 	api.GET("/stats/profile", h.ProfileStats)
@@ -62,6 +66,9 @@ func main() {
 	private.Use(auth.Require())
 	private.GET("/me", h.Me)
 	private.GET("/me/posts", h.ListOwnPosts)
+	private.POST("/search/reindex", h.ReindexSearch)
+	private.POST("/admin/search/reindex", h.ReindexSearch)
+	private.GET("/admin/search/jobs", h.SearchJobs)
 	private.PUT("/me", h.UpdateMe)
 	private.POST("/posts", h.CreatePost)
 	private.PUT("/posts/:id", h.UpdatePost)

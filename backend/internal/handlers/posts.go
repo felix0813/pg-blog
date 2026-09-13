@@ -316,6 +316,13 @@ func (h *Handler) afterMutation(c *gin.Context, userID int64, postID int64, even
 	}
 	h.stats.TouchActivity(c, userID, event, payload)
 	h.rebuildStats(c, userID)
+	if event != "post.deleted" {
+		if postID > 0 {
+			h.enqueueSearchJob(c, userID, postID)
+		} else {
+			h.enqueueTaxonomySearchJobs(c, userID)
+		}
+	}
 }
 
 func (h *Handler) rebuildStats(c *gin.Context, userID int64) {
@@ -354,4 +361,8 @@ func (h *Handler) ProfileStats(c *gin.Context) {
 	}
 	c.Header("Cache-Control", "no-store")
 	c.JSON(http.StatusOK, h.stats.Profile(c, userID))
+}
+
+func (h *Handler) enqueueSearchJob(c *gin.Context, _ int64, postID int64) {
+	_, _ = h.db.Exec(c, `INSERT INTO search_index_jobs (post_id, job_type) VALUES ($1, 'upsert')`, postID)
 }

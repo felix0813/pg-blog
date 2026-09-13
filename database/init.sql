@@ -95,3 +95,7 @@ CREATE TRIGGER tags_set_updated_at BEFORE UPDATE ON tags FOR EACH ROW EXECUTE FU
 
 DROP TRIGGER IF EXISTS posts_set_updated_at ON posts;
 CREATE TRIGGER posts_set_updated_at BEFORE UPDATE ON posts FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+\ir migrations/001_search.sql
+\ir migrations/002_text_embedding_v4.sql
+\ir migrations/003_qwen37_embedding.sql
+\ir migrations/004_search_backfill.sql
