@@ -21,6 +21,7 @@ export function Posts() {
   }, [])
 
   React.useEffect(() => {
+    const controller = new AbortController()
     const params = new URLSearchParams({
       page: String(filters.page),
       page_size: '10',
@@ -28,16 +29,18 @@ export function Posts() {
     if (filters.category) params.set('category', filters.category)
     if (filters.tag) params.set('tag', filters.tag)
     if (filters.status) params.set('status', filters.status)
-    get(`/api/posts?${params}`)
+    get(`/api/posts?${params}`, { signal: controller.signal })
       .then((data) => {
         setPosts(data.items || [])
         setHasMore(data.has_more || false)
       })
-      .catch(() => {
+      .catch((err) => {
+        if (err.name === "AbortError") return
         setPosts([])
         setHasMore(false)
       })
-  }, [filters])
+    return () => controller.abort()
+  }, [filters.category, filters.tag, filters.status, filters.page])
 
   return (
     <section>

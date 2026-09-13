@@ -64,6 +64,7 @@ export function PostDetail() {
         </div>
       </div>
       {error && <p className="error">{error}</p>}
+      {post.summary && <p className="articleSummary">{post.summary}</p>}
       <div
         className="rendered"
         dangerouslySetInnerHTML={{
