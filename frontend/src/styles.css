@@ -338,3 +338,5 @@ textarea { width: 100%; min-height: 92px; resize: vertical; }
   .postRow, .sectionHeader, .settingsPreview { align-items: flex-start; flex-direction: column; }
   .accountPill strong { display: none; }
 }
+
+.articleSummary { margin: 0 0 24px; padding: 16px 18px; border-left: 4px solid var(--accent); border-radius: 0 14px 14px 0; background: var(--accentSoft); color: var(--muted); line-height: 1.7; }
