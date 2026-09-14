@@ -1,8 +1,8 @@
 import React from 'react'
-import DOMPurify from 'dompurify'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { del, get } from '../lib/api.js'
 import { QuillIcon } from '../components/Icons.jsx'
+import { RenderedPostContent } from '../components/RenderedPostContent.jsx'
 
 export function PostDetail() {
   const { id } = useParams()
@@ -68,12 +68,7 @@ export function PostDetail() {
       </div>
       {error && <p className="error">{error}</p>}
       {post.summary && <p className="articleSummary">{post.summary}</p>}
-      <div
-        className="rendered"
-        dangerouslySetInnerHTML={{
-          __html: DOMPurify.sanitize(post.content_html || ''),
-        }}
-      />
+      <RenderedPostContent html={post.content_html} />
       {related.length > 0 && (
         <section className="relatedPosts">
           <h2>相关文章</h2>

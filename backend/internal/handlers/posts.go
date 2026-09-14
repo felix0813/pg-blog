@@ -195,6 +195,9 @@ func (h *Handler) savePost(c *gin.Context, userID int64, postID int64, req postR
 	if !json.Valid(req.ContentJSON) {
 		return models.Post{}, fmt.Errorf("content_json must be valid JSON")
 	}
+	if err := validateDiagramContent(req.ContentJSON); err != nil {
+		return models.Post{}, err
+	}
 	var publishedAt *time.Time
 	if status == "published" {
 		now := time.Now()

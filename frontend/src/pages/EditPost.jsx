@@ -6,6 +6,7 @@ import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import {
   Bold,
+  Braces,
   Code2,
   Heading1,
   Heading2,
@@ -24,6 +25,7 @@ import {
 } from 'lucide-react'
 import { get, post, put } from '../lib/api.js'
 import { useNavigate, useParams } from 'react-router-dom'
+import { DiagramBlock } from '../components/DiagramBlock.jsx'
 
 const emptyDoc = { type: 'doc', content: [{ type: 'paragraph' }] }
 
@@ -43,14 +45,23 @@ export function EditPost() {
   const [tags, setTags] = React.useState([])
   const [message, setMessage] = React.useState('')
   const [error, setError] = React.useState('')
+  const [, setEditorRevision] = React.useState(0)
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        codeBlock: {
+          defaultLanguage: 'text',
+          enableTabIndentation: true,
+          tabSize: 2,
+        },
+      }),
       Link.configure({ openOnClick: false }),
       Placeholder.configure({ placeholder: '开始写作...' }),
     ],
     content: emptyDoc,
+    onUpdate: () => setEditorRevision((value) => value + 1),
+    onSelectionUpdate: () => setEditorRevision((value) => value + 1),
   })
 
   React.useEffect(() => {
@@ -181,7 +192,13 @@ export function EditPost() {
     ],
     [
       {
-        title: '一级标题',
+        title: '\u4ee3\u7801\u5757',
+        icon: Braces,
+        active: editor?.isActive('codeBlock'),
+        action: () => editor?.chain().focus().toggleCodeBlock({ language: 'text' }).run(),
+      },
+      {
+        title: '\u4e00\u7ea7\u6807\u9898',
         icon: Heading1,
         active: editor?.isActive('heading', { level: 1 }),
         action: () => editor?.chain().focus().toggleHeading({ level: 1 }).run(),
@@ -242,6 +259,22 @@ export function EditPost() {
       },
     ],
   ]
+
+  const activeCodeLanguage = editor?.isActive('codeBlock')
+    ? editor.getAttributes('codeBlock').language || 'text'
+    : ''
+  const activeCodeSource = editor?.isActive('codeBlock')
+    ? editor.state.selection.$from.parent.textContent
+    : ''
+
+  function setCodeLanguage(language) {
+    if (!editor) return
+    if (editor.isActive('codeBlock')) {
+      editor.chain().focus().updateAttributes('codeBlock', { language }).run()
+    } else {
+      editor.chain().focus().setCodeBlock({ language }).run()
+    }
+  }
 
   return (
     <section className="editorPage">
@@ -333,8 +366,27 @@ export function EditPost() {
             ))}
           </div>
         ))}
+        <label className="codeLanguagePicker">
+          {'\u4ee3\u7801\u8bed\u8a00'}
+          <select
+            value={activeCodeLanguage || 'text'}
+            onChange={(event) => setCodeLanguage(event.target.value)}
+            disabled={!editor}
+          >
+            <option value="text">{'\u7eaf\u6587\u672c'}</option>
+            <option value="mermaid">Mermaid {'\u56fe\u8868'}</option>
+          </select>
+        </label>
       </div>
       <EditorContent className="editorSurface" editor={editor} />
+      {activeCodeLanguage === 'mermaid' && (
+        <section className="diagramPreview">
+          <p className="eyebrow">Mermaid Preview</p>
+          {activeCodeSource.trim()
+            ? <DiagramBlock language="mermaid" source={activeCodeSource} theme={document.documentElement.dataset.theme || 'light'} />
+            : <p className="muted">{'\u8f93\u5165 Mermaid \u4ee3\u7801\u540e\u5c06\u5728\u8fd9\u91cc\u9884\u89c8\u3002'}</p>}
+        </section>
+      )}
     </section>
   )
 }

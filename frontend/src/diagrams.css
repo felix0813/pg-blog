@@ -1,0 +1,87 @@
+.diagramBlock {
+  margin: 24px 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.diagramToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.diagramToolbar > div {
+  display: flex;
+  gap: 6px;
+}
+
+.diagramToolbar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.diagramToolbar button:hover { background: var(--accentSoft); color: var(--accent); }
+
+.diagramCanvas {
+  min-height: 120px;
+  overflow-x: auto;
+  padding: 20px;
+}
+
+.diagramCanvas > div {
+  display: flex;
+  width: max-content;
+  min-width: 100%;
+  justify-content: center;
+}
+
+.diagramCanvas svg { display: block; max-width: none; height: auto; }
+.diagramCanvas .muted, .diagramError { margin: 28px 0; text-align: center; }
+.diagramError { color: var(--danger); }
+
+.diagramSource {
+  max-height: 320px;
+  margin: 0;
+  overflow: auto;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  padding: 14px 16px;
+  background: var(--background);
+  white-space: pre;
+}
+
+.codeLanguagePicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.codeLanguagePicker select { width: auto; min-width: 120px; padding: 6px 28px 6px 8px; }
+.editorSurface .ProseMirror pre { overflow-x: auto; padding: 14px 16px; border-radius: 10px; background: var(--background); }
+.editorSurface .ProseMirror pre code { padding: 0; background: transparent; color: inherit; }
+.diagramPreview { margin-top: 18px; }
+
+@media (max-width: 640px) {
+  .diagramToolbar { align-items: flex-start; flex-direction: column; }
+  .diagramToolbar > div { width: 100%; }
+  .diagramToolbar button { flex: 1; justify-content: center; }
+  .codeLanguagePicker { width: 100%; margin-left: 0; }
+  .codeLanguagePicker select { flex: 1; }
+}
