@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { del, get } from '../lib/api.js'
 import { QuillIcon } from '../components/Icons.jsx'
 import { RenderedPostContent } from '../components/RenderedPostContent.jsx'
+import { ArticleTableOfContents } from '../components/ArticleTableOfContents.jsx'
+import { SeriesNavigation } from '../components/SeriesNavigation.jsx'
 
 export function PostDetail() {
   const { id } = useParams()
@@ -10,6 +12,9 @@ export function PostDetail() {
   const [post, setPost] = React.useState(null)
   const [related, setRelated] = React.useState([])
   const [error, setError] = React.useState('')
+  const [headings, setHeadings] = React.useState([])
+  const [seriesData, setSeriesData] = React.useState(null)
+  const handleHeadingsChange = React.useCallback((items) => setHeadings(items), [])
 
   React.useEffect(() => {
     setError('')
@@ -18,6 +23,7 @@ export function PostDetail() {
       .catch((err) => setError(err.message))
   }, [id])
   React.useEffect(() => { get("/api/posts/" + id + "/related?limit=6").then((data) => setRelated(data.items || [])).catch(() => setRelated([])) }, [id])
+  React.useEffect(() => { get("/api/posts/" + id + "/series").then(setSeriesData).catch(() => setSeriesData(null)) }, [id])
 
 
   async function deletePost() {
@@ -41,6 +47,7 @@ export function PostDetail() {
   }
 
   return (
+    <div className="articleLayout">
     <article className="article">
       <div className="sectionHeader">
         <div>
@@ -77,7 +84,8 @@ export function PostDetail() {
       </div>
       {error && <p className="error">{error}</p>}
       {post.summary && <p className="articleSummary">{post.summary}</p>}
-      <RenderedPostContent html={post.content_html} />
+      <RenderedPostContent html={post.content_html} onHeadingsChange={handleHeadingsChange} />
+      <SeriesNavigation data={seriesData} currentPostID={post.id} />
       {related.length > 0 && (
         <section className="relatedPosts">
           <h2>相关文章</h2>
@@ -92,5 +100,7 @@ export function PostDetail() {
         </section>
       )}
     </article>
+    <ArticleTableOfContents headings={headings} />
+    </div>
   )
 }

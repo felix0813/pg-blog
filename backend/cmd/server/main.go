@@ -57,9 +57,11 @@ func main() {
 	api.GET("/posts", h.ListPosts)
 	api.GET("/posts/:id", h.GetPost)
 	api.GET("/posts/:id/related", h.SemanticRelatedPosts)
+	api.GET("/posts/:id/series", h.SeriesPosts)
 	api.GET("/search", h.Search)
 	api.GET("/categories", h.ListCategories)
 	api.GET("/tags", h.ListTags)
+	api.GET("/series", h.ListSeries)
 	api.GET("/stats/profile", h.ProfileStats)
 
 	private := api.Group("")
@@ -77,6 +79,7 @@ func main() {
 	private.PUT("/categories/:id", h.UpdateCategory)
 	private.DELETE("/categories/:id", h.DeleteCategory)
 	private.POST("/tags", h.CreateTag)
+	private.POST("/series", h.CreateSeries)
 	private.PUT("/tags/:id", h.UpdateTag)
 	private.DELETE("/tags/:id", h.DeleteTag)
 

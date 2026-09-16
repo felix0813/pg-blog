@@ -17,13 +17,23 @@ function useDocumentTheme() {
   return theme
 }
 
-export function RenderedPostContent({ html }) {
+export function RenderedPostContent({ html, onHeadingsChange }) {
   const containerRef = React.useRef(null)
   const theme = useDocumentTheme()
   const cleanHTML = React.useMemo(() => DOMPurify.sanitize(html || ''), [html])
 
   React.useEffect(() => {
     const mountedDiagrams = []
+    const usedHeadingIDs = new Set()
+    const headings = []
+    containerRef.current?.querySelectorAll('h1, h2, h3').forEach((heading) => {
+      const text = heading.textContent?.trim() || ''
+      if (!text) return
+      const id = createHeadingId(text, usedHeadingIDs)
+      heading.id = id
+      headings.push({ id, text, level: Number(heading.tagName.slice(1)) })
+    })
+    onHeadingsChange?.(headings)
     let diagramCount = 0
     const blocks = containerRef.current?.querySelectorAll('pre > code[class]') || []
 
@@ -46,7 +56,7 @@ export function RenderedPostContent({ html }) {
       root.unmount()
       if (mount.isConnected) mount.replaceWith(original)
     })
-  }, [cleanHTML, theme])
+  }, [cleanHTML, theme, onHeadingsChange])
 
   return <div ref={containerRef} className="rendered" dangerouslySetInnerHTML={{ __html: cleanHTML }} />
 }

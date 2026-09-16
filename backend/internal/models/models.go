@@ -33,22 +33,43 @@ type Tag struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type Series struct {
+	ID          int64     `json:"id"`
+	UserID      int64     `json:"user_id"`
+	Title       string    `json:"title"`
+	Slug        string    `json:"slug"`
+	Description string    `json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+type SeriesPost struct {
+	ID       int64  `json:"id"`
+	Title    string `json:"title"`
+	Slug     string `json:"slug"`
+	Summary  string `json:"summary"`
+	Status   string `json:"status"`
+	Position int    `json:"position"`
+}
+
 type Post struct {
-	ID          int64           `json:"id"`
-	UserID      int64           `json:"user_id"`
-	CategoryID  *int64          `json:"category_id"`
-	Title       string          `json:"title"`
-	Slug        string          `json:"slug"`
-	Summary     string          `json:"summary"`
-	Status      string          `json:"status"`
-	ContentJSON json.RawMessage `json:"content_json,omitempty"`
-	ContentHTML string          `json:"content_html"`
-	OSSJSONKey  string          `json:"oss_json_key"`
-	OSSHTMLKey  string          `json:"oss_html_key"`
-	ViewCount   int64           `json:"view_count"`
-	PublishedAt *time.Time      `json:"published_at"`
-	CreatedAt   time.Time       `json:"created_at"`
-	UpdatedAt   time.Time       `json:"updated_at"`
-	Category    *Category       `json:"category,omitempty"`
-	Tags        []Tag           `json:"tags"`
+	ID             int64           `json:"id"`
+	UserID         int64           `json:"user_id"`
+	CategoryID     *int64          `json:"category_id"`
+	SeriesID       *int64          `json:"series_id"`
+	SeriesPosition int             `json:"series_position"`
+	Title          string          `json:"title"`
+	Slug           string          `json:"slug"`
+	Summary        string          `json:"summary"`
+	Status         string          `json:"status"`
+	ContentJSON    json.RawMessage `json:"content_json,omitempty"`
+	ContentHTML    string          `json:"content_html"`
+	OSSJSONKey     string          `json:"oss_json_key"`
+	OSSHTMLKey     string          `json:"oss_html_key"`
+	ViewCount      int64           `json:"view_count"`
+	PublishedAt    *time.Time      `json:"published_at"`
+	CreatedAt      time.Time       `json:"created_at"`
+	UpdatedAt      time.Time       `json:"updated_at"`
+	Category       *Category       `json:"category,omitempty"`
+	Series         *Series         `json:"series,omitempty"`
+	Tags           []Tag           `json:"tags"`
 }

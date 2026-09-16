@@ -10,7 +10,7 @@ test('equivalent form values and reordered tags are not dirty', () => {
 })
 
 test('detects changes to every article field and the body', () => {
-  for (const patch of [{ title: 'Other' }, { slug: 'other' }, { summary: 'Summary' }, { status: 'published' }, { category_id: 3 }, { tag_ids: [1] }]) {
+  for (const patch of [{ title: 'Other' }, { slug: 'other' }, { summary: 'Summary' }, { status: 'published' }, { category_id: 3 }, { series_id: 4 }, { series_position: 2 }, { tag_ids: [1] }]) {
     assert.notEqual(postSnapshot(meta, doc), postSnapshot({ ...meta, ...patch }, doc))
   }
   assert.notEqual(postSnapshot(meta, doc), postSnapshot(meta, { ...doc, content: [] }))

@@ -41,10 +41,13 @@ export function EditPost() {
     summary: '',
     status: 'published',
     category_id: '',
+    series_id: '',
+    series_position: 0,
     tag_ids: [],
   })
   const [categories, setCategories] = React.useState([])
   const [tags, setTags] = React.useState([])
+  const [series, setSeries] = React.useState([])
   const [message, setMessage] = React.useState('')
   const [error, setError] = React.useState('')
   const [, setEditorRevision] = React.useState(0)
@@ -71,6 +74,7 @@ export function EditPost() {
   React.useEffect(() => {
     get('/api/categories').then((data) => setCategories(data.items || []))
     get('/api/tags').then((data) => setTags(data.items || []))
+    get("/api/series").then((data) => setSeries(data.items || []))
   }, [])
 
   React.useEffect(() => {
@@ -84,6 +88,8 @@ export function EditPost() {
         summary: data.summary,
         status: data.status,
         category_id: data.category_id || '',
+        series_id: data.series_id || '',
+        series_position: data.series_position || 0,
         tag_ids: (data.tags || []).map((tag) => tag.id),
       }
       setMeta(loadedMeta)
@@ -99,6 +105,8 @@ export function EditPost() {
     const body = {
       ...meta,
       category_id: meta.category_id ? Number(meta.category_id) : null,
+      series_id: meta.series_id ? Number(meta.series_id) : null,
+      series_position: Number(meta.series_position) || 0,
       tag_ids: meta.tag_ids.map(Number),
       content_json: editor.getJSON(),
       content_html: DOMPurify.sanitize(editor.getHTML()),
@@ -153,6 +161,20 @@ export function EditPost() {
       const item = await post('/api/tags', { name, slug })
       setTags([...tags, item])
       setMeta({ ...meta, tag_ids: [...meta.tag_ids, item.id] })
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function addSeries() {
+    const title = window.prompt("\u7cfb\u5217\u540d\u79f0")
+    if (!title) return
+    const slug = window.prompt("\u7cfb\u5217 Slug", title.toLowerCase().split(" ").join("-"))
+    if (!slug) return
+    try {
+      const item = await post("/api/series", { title, slug, description: "" })
+      setSeries([...series, item])
+      setMeta({ ...meta, series_id: String(item.id), series_position: 0 })
     } catch (err) {
       setError(err.message)
     }
@@ -329,6 +351,14 @@ export function EditPost() {
             <Plus size={16} />
           </button>
         </div>
+        <div className="flexRow">
+          <select value={meta.series_id} onChange={(e) => setMeta({ ...meta, series_id: e.target.value })}>
+            <option value="">{'\u65e0\u7cfb\u5217'}</option>
+            {series.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+          </select>
+          <button className="iconButton" type="button" onClick={addSeries} title="\u6dfb\u52a0\u7cfb\u5217"><Plus size={16} /></button>
+        </div>
+        <input type="number" min="0" placeholder={'\u7cfb\u5217\u6392\u5e8f'} value={meta.series_position} onChange={(e) => setMeta({ ...meta, series_position: e.target.value })} />
       </div>
       <textarea
         placeholder="摘要"

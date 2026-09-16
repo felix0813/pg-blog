@@ -18,14 +18,16 @@ import (
 )
 
 type postRequest struct {
-	Title       string          `json:"title" binding:"required"`
-	Slug        string          `json:"slug" binding:"required"`
-	Summary     string          `json:"summary"`
-	Status      string          `json:"status"`
-	CategoryID  *int64          `json:"category_id"`
-	TagIDs      []int64         `json:"tag_ids"`
-	ContentJSON json.RawMessage `json:"content_json" binding:"required"`
-	ContentHTML string          `json:"content_html" binding:"required"`
+	Title          string          `json:"title" binding:"required"`
+	Slug           string          `json:"slug" binding:"required"`
+	Summary        string          `json:"summary"`
+	Status         string          `json:"status"`
+	CategoryID     *int64          `json:"category_id"`
+	SeriesID       *int64          `json:"series_id"`
+	SeriesPosition int             `json:"series_position"`
+	TagIDs         []int64         `json:"tag_ids"`
+	ContentJSON    json.RawMessage `json:"content_json" binding:"required"`
+	ContentHTML    string          `json:"content_html" binding:"required"`
 }
 
 func (h *Handler) ListPosts(c *gin.Context) {
@@ -192,8 +194,17 @@ func (h *Handler) savePost(c *gin.Context, userID int64, postID int64, req postR
 		return models.Post{}, fmt.Errorf("invalid post status")
 	}
 	cleanHTML := h.policy.Sanitize(req.ContentHTML)
+	if req.SeriesPosition < 0 {
+		return models.Post{}, fmt.Errorf("series_position must be non-negative")
+	}
 	if !json.Valid(req.ContentJSON) {
 		return models.Post{}, fmt.Errorf("content_json must be valid JSON")
+	}
+	if req.SeriesID != nil {
+		var exists bool
+		if err := h.db.QueryRow(c, `SELECT EXISTS(SELECT 1 FROM series WHERE id=$1 AND user_id=$2)`, *req.SeriesID, userID).Scan(&exists); err != nil || !exists {
+			return models.Post{}, fmt.Errorf("series not found")
+		}
 	}
 	if err := validateDiagramContent(req.ContentJSON); err != nil {
 		return models.Post{}, err
@@ -212,14 +223,14 @@ func (h *Handler) savePost(c *gin.Context, userID int64, postID int64, req postR
 	var id int64
 	if postID == 0 {
 		err = tx.QueryRow(c, `
-			INSERT INTO posts (user_id, category_id, title, slug, summary, status, content_json, content_html, published_at)
-			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-			RETURNING id`, userID, req.CategoryID, req.Title, req.Slug, req.Summary, status, req.ContentJSON, cleanHTML, publishedAt).Scan(&id)
+			INSERT INTO posts (user_id, category_id, series_id, series_position, title, slug, summary, status, content_json, content_html, published_at)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+			RETURNING id`, userID, req.CategoryID, req.SeriesID, req.SeriesPosition, req.Title, req.Slug, req.Summary, status, req.ContentJSON, cleanHTML, publishedAt).Scan(&id)
 	} else {
 		id = postID
 		tag, execErr := tx.Exec(c, `
-			UPDATE posts SET category_id=$1,title=$2,slug=$3,summary=$4,status=$5,content_json=$6,content_html=$7,published_at=COALESCE(published_at,$8)
-			WHERE id=$9 AND user_id=$10`, req.CategoryID, req.Title, req.Slug, req.Summary, status, req.ContentJSON, cleanHTML, publishedAt, postID, userID)
+			UPDATE posts SET category_id=$1,series_id=$2,series_position=$3,title=$4,slug=$5,summary=$6,status=$7,content_json=$8,content_html=$9,published_at=COALESCE(published_at,$10)
+			WHERE id=$11 AND user_id=$12`, req.CategoryID, req.SeriesID, req.SeriesPosition, req.Title, req.Slug, req.Summary, status, req.ContentJSON, cleanHTML, publishedAt, postID, userID)
 		if execErr != nil {
 			err = execErr
 		} else if tag.RowsAffected() == 0 {
@@ -257,9 +268,9 @@ func (h *Handler) savePost(c *gin.Context, userID int64, postID int64, req postR
 func (h *Handler) fetchPost(c *gin.Context, id int64) (models.Post, error) {
 	var post models.Post
 	err := h.db.QueryRow(c, `
-		SELECT id, user_id, category_id, title, slug, summary, status, content_json, content_html, oss_json_key, oss_html_key, view_count, published_at, created_at, updated_at
+		SELECT id, user_id, category_id, series_id, series_position, title, slug, summary, status, content_json, content_html, oss_json_key, oss_html_key, view_count, published_at, created_at, updated_at
 		FROM posts WHERE id=$1`, id).
-		Scan(&post.ID, &post.UserID, &post.CategoryID, &post.Title, &post.Slug, &post.Summary, &post.Status, &post.ContentJSON, &post.ContentHTML, &post.OSSJSONKey, &post.OSSHTMLKey, &post.ViewCount, &post.PublishedAt, &post.CreatedAt, &post.UpdatedAt)
+		Scan(&post.ID, &post.UserID, &post.CategoryID, &post.SeriesID, &post.SeriesPosition, &post.Title, &post.Slug, &post.Summary, &post.Status, &post.ContentJSON, &post.ContentHTML, &post.OSSJSONKey, &post.OSSHTMLKey, &post.ViewCount, &post.PublishedAt, &post.CreatedAt, &post.UpdatedAt)
 	if err != nil {
 		return post, err
 	}
@@ -270,6 +281,12 @@ func (h *Handler) fetchPost(c *gin.Context, id int64) (models.Post, error) {
 			var tag models.Tag
 			_ = rows.Scan(&tag.ID, &tag.UserID, &tag.Name, &tag.Slug, &tag.CreatedAt)
 			post.Tags = append(post.Tags, tag)
+		}
+	}
+	if post.SeriesID != nil {
+		var series models.Series
+		if err := h.db.QueryRow(c, `SELECT id,user_id,title,slug,description,created_at FROM series WHERE id=$1`, *post.SeriesID).Scan(&series.ID, &series.UserID, &series.Title, &series.Slug, &series.Description, &series.CreatedAt); err == nil {
+			post.Series = &series
 		}
 	}
 	return post, nil
