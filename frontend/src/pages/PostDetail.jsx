@@ -56,6 +56,11 @@ export function PostDetail() {
             </span>
           </div>
           <p>{new Date(post.created_at).toLocaleString()}</p>
+          {(post.tags || []).length > 0 && (
+            <ul className="postTags" aria-label={'\u6587\u7ae0\u6807\u7b7e'}>
+              {post.tags.map((tag) => <li key={tag.id}>#{tag.name}</li>)}
+            </ul>
+          )}
         </div>
         <div className="actions">
           <Link className="button" to={`/edit/${post.id}`}>
