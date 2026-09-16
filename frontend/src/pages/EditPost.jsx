@@ -26,6 +26,7 @@ import {
 import { get, post, put } from '../lib/api.js'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DiagramBlock } from '../components/DiagramBlock.jsx'
+import { insertMermaidBlock, continueWritingAfterCode } from '../lib/editorBlocks.js'
 
 const emptyDoc = { type: 'doc', content: [{ type: 'paragraph' }] }
 
@@ -268,12 +269,8 @@ export function EditPost() {
     : ''
 
   function setCodeLanguage(language) {
-    if (!editor) return
-    if (editor.isActive('codeBlock')) {
-      editor.chain().focus().updateAttributes('codeBlock', { language }).run()
-    } else {
-      editor.chain().focus().setCodeBlock({ language }).run()
-    }
+    if (!editor?.isActive('codeBlock')) return
+    editor.chain().focus().updateAttributes('codeBlock', { language }).run()
   }
 
   return (
@@ -366,12 +363,18 @@ export function EditPost() {
             ))}
           </div>
         ))}
+        <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => insertMermaidBlock(editor)} disabled={!editor}>
+          <Plus size={16} /> {'\u63d2\u5165\u56fe\u8868'}
+        </button>
+        {activeCodeLanguage && <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => continueWritingAfterCode(editor)}>
+          {'\u7ee7\u7eed\u6b63\u6587'}
+        </button>}
         <label className="codeLanguagePicker">
-          {'\u4ee3\u7801\u8bed\u8a00'}
+          {'\u5f53\u524d\u4ee3\u7801\u5757\u8bed\u8a00'}
           <select
             value={activeCodeLanguage || 'text'}
             onChange={(event) => setCodeLanguage(event.target.value)}
-            disabled={!editor}
+            disabled={!activeCodeLanguage}
           >
             <option value="text">{'\u7eaf\u6587\u672c'}</option>
             <option value="mermaid">Mermaid {'\u56fe\u8868'}</option>
