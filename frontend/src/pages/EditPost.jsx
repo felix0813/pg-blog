@@ -27,6 +27,7 @@ import { get, post, put } from '../lib/api.js'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DiagramBlock } from '../components/DiagramBlock.jsx'
 import { insertMermaidBlock, continueWritingAfterCode } from '../lib/editorBlocks.js'
+import { useUnsavedPostChanges } from '../lib/useUnsavedPostChanges.js'
 
 const emptyDoc = { type: 'doc', content: [{ type: 'paragraph' }] }
 
@@ -65,6 +66,8 @@ export function EditPost() {
     onSelectionUpdate: () => setEditorRevision((value) => value + 1),
   })
 
+  const { isDirty, markBaseline, finishSave } = useUnsavedPostChanges(meta, editor?.getJSON() || emptyDoc)
+
   React.useEffect(() => {
     get('/api/categories').then((data) => setCategories(data.items || []))
     get('/api/tags').then((data) => setTags(data.items || []))
@@ -72,19 +75,22 @@ export function EditPost() {
 
   React.useEffect(() => {
     if (!editor || isNew) return
+    let cancelled = false
     get(`/api/posts/${id}`).then((data) => {
-      setMeta({
+      if (cancelled) return
+      const loadedMeta = {
         title: data.title,
         slug: data.slug,
         summary: data.summary,
         status: data.status,
         category_id: data.category_id || '',
         tag_ids: (data.tags || []).map((tag) => tag.id),
-      })
-      editor.commands.setContent(
-        data.content_json || data.content_html || emptyDoc,
-      )
-    })
+      }
+      setMeta(loadedMeta)
+      editor.commands.setContent(data.content_json || data.content_html || emptyDoc)
+      markBaseline(loadedMeta, editor.getJSON())
+    }).catch((err) => { if (!cancelled) setError(err.message) })
+    return () => { cancelled = true }
   }, [editor, id, isNew])
 
   async function save() {
@@ -102,7 +108,7 @@ export function EditPost() {
         ? await post('/api/posts', body)
         : await put(`/api/posts/${id}`, body)
       setMessage('已保存，缓存已刷新')
-      navigate(`/post/${data.id}`)
+      if (finishSave(meta, body.content_json)) navigate(`/post/${data.id}`)
     } catch (err) {
       setError(err.message)
     }
@@ -286,6 +292,7 @@ export function EditPost() {
         </button>
       </div>
       {message && <p className="success">{message}</p>}
+      {isDirty && <p className="muted" role="status">{'\u6709\u672a\u4fdd\u5b58\u7684\u66f4\u6539'}</p>}
       {error && <p className="error">{error}</p>}
       <div className="metaGrid">
         <input
@@ -392,4 +399,9 @@ export function EditPost() {
       )}
     </section>
   )
+}
+
+export function EditPostRoute() {
+  const { id } = useParams()
+  return <EditPost key={id} />
 }
