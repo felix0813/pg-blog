@@ -370,11 +370,11 @@ export function EditPost() {
             ))}
           </div>
         ))}
-        <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => insertMermaidBlock(editor)} disabled={!editor}>
+        <button className="toolbarTextButton" type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => insertMermaidBlock(editor)} disabled={!editor}>
           <Plus size={16} /> {'\u63d2\u5165\u56fe\u8868'}
         </button>
-        {activeCodeLanguage && <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => continueWritingAfterCode(editor)}>
-          {'\u7ee7\u7eed\u6b63\u6587'}
+        {activeCodeLanguage && <button className="toolbarTextButton" type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => continueWritingAfterCode(editor)}>
+          {'\u5728\u4ee3\u7801\u5757\u540e\u5199\u6b63\u6587'}
         </button>}
         <label className="codeLanguagePicker">
           {'\u5f53\u524d\u4ee3\u7801\u5757\u8bed\u8a00'}

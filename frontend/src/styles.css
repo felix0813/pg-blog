@@ -148,7 +148,7 @@ textarea { width: 100%; min-height: 92px; resize: vertical; }
   font-size: 14px;
 }
 
-.iconButton, .toolbar button, .composeFab {
+.iconButton, .toolbarGroup button, .composeFab {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -291,6 +291,8 @@ textarea { width: 100%; min-height: 92px; resize: vertical; }
 .toolbarGroup:last-child { border-right: 0; }
 .toolbar button { border-radius: 11px; background: var(--panelSolid); }
 .toolbar button.active { border-color: var(--accent); background: var(--accentSoft); color: var(--accent); }
+.toolbar .toolbarTextButton { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: 0 0 auto; width: auto; min-height: 38px; height: auto; padding: 8px 12px; font-size: 13px; line-height: 1.4; white-space: nowrap; }
+.toolbar .toolbarTextButton svg { flex-shrink: 0; }
 
 .editorSurface {
   min-height: 460px;
