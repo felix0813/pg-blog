@@ -265,6 +265,9 @@ textarea { width: 100%; min-height: 92px; resize: vertical; }
 
 .postTags { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 12px 0 0; padding: 0; }
 .postTags li { max-width: 100%; padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--accentSoft); color: var(--accent); font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; }
+.postTags a { display: block; color: inherit; }
+.postTags li:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 20%, var(--panelSolid)); }
+.postTags a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
 
 .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; font-weight: 750; }
 .actions { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }

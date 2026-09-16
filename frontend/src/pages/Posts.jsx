@@ -1,19 +1,23 @@
 import React from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { get } from '../lib/api.js'
 import { PostList } from '../components/PostList.jsx'
 import { QuillIcon } from '../components/Icons.jsx'
+import { postFiltersFromSearch, postFiltersToSearch } from '../lib/postFilters.js'
 
 export function Posts() {
   const [posts, setPosts] = React.useState([])
   const [hasMore, setHasMore] = React.useState(false)
   const [categories, setCategories] = React.useState([])
   const [tags, setTags] = React.useState([])
-  const [filters, setFilters] = React.useState({
-    category: '',
-    tag: '',
-    status: '',
-    page: 1,
-  })
+  const [searchParams, setSearchParams] = useSearchParams()
+  const filters = postFiltersFromSearch(searchParams)
+
+  function changeFilters(patch) {
+    const next = { ...filters, ...patch }
+    if (patch.page === undefined) next.page = 1
+    setSearchParams(postFiltersToSearch(next))
+  }
 
   React.useEffect(() => {
     get('/api/categories').then((data) => setCategories(data.items || []))
@@ -53,7 +57,7 @@ export function Posts() {
           <select
             value={filters.category}
             onChange={(e) =>
-              setFilters({ ...filters, category: e.target.value, page: 1 })
+              changeFilters({ category: e.target.value })
             }
           >
             <option value="">全部分类</option>
@@ -66,7 +70,7 @@ export function Posts() {
           <select
             value={filters.tag}
             onChange={(e) =>
-              setFilters({ ...filters, tag: e.target.value, page: 1 })
+              changeFilters({ tag: e.target.value })
             }
           >
             <option value="">全部标签</option>
@@ -79,7 +83,7 @@ export function Posts() {
           <select
             value={filters.status}
             onChange={(e) =>
-              setFilters({ ...filters, status: e.target.value, page: 1 })
+              changeFilters({ status: e.target.value })
             }
           >
             <option value="">全部状态</option>
@@ -93,14 +97,14 @@ export function Posts() {
       <div className="pager">
         <button
           disabled={filters.page <= 1}
-          onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
+          onClick={() => changeFilters({ page: filters.page - 1 })}
         >
           上一页
         </button>
         <span>第 {filters.page} 页</span>
         <button
           disabled={!hasMore}
-          onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
+          onClick={() => changeFilters({ page: filters.page + 1 })}
         >
           下一页
         </button>
