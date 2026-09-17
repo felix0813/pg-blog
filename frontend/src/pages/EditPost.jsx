@@ -27,6 +27,7 @@ import { get, post, put } from '../lib/api.js'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DiagramBlock } from '../components/DiagramBlock.jsx'
 import { insertMermaidBlock, continueWritingAfterCode } from '../lib/editorBlocks.js'
+import { PostPreviewModal } from '../components/PostPreviewModal.jsx'
 import { useUnsavedPostChanges } from '../lib/useUnsavedPostChanges.js'
 
 const emptyDoc = { type: 'doc', content: [{ type: 'paragraph' }] }
@@ -50,6 +51,8 @@ export function EditPost() {
   const [series, setSeries] = React.useState([])
   const [message, setMessage] = React.useState('')
   const [error, setError] = React.useState('')
+  const [preview, setPreview] = React.useState(null)
+  const [isPublishing, setIsPublishing] = React.useState(false)
   const [, setEditorRevision] = React.useState(0)
 
   const editor = useEditor({
@@ -99,10 +102,9 @@ export function EditPost() {
     return () => { cancelled = true }
   }, [editor, id, isNew])
 
-  async function save() {
-    if (!editor) return
-    setError('')
-    const body = {
+  function buildPostBody() {
+    if (!editor) return null
+    return {
       ...meta,
       category_id: meta.category_id ? Number(meta.category_id) : null,
       series_id: meta.series_id ? Number(meta.series_id) : null,
@@ -111,14 +113,30 @@ export function EditPost() {
       content_json: editor.getJSON(),
       content_html: DOMPurify.sanitize(editor.getHTML()),
     }
+  }
+
+  function openPreview() {
+    const body = buildPostBody()
+    if (!body) return
+    setError('')
+    setPreview(body)
+  }
+
+  async function save() {
+    if (!preview) return
+    setError('')
+    setIsPublishing(true)
     try {
       const data = isNew
-        ? await post('/api/posts', body)
-        : await put(`/api/posts/${id}`, body)
-      setMessage('已保存，缓存已刷新')
-      if (finishSave(meta, body.content_json)) navigate(`/post/${data.id}`)
+        ? await post('/api/posts', preview)
+        : await put(`/api/posts/${id}`, preview)
+      setMessage("\u5df2\u4fdd\u5b58\uff0c\u7f13\u5b58\u5df2\u5237\u65b0")
+      setPreview(null)
+      if (finishSave(meta, preview.content_json)) navigate(`/post/${data.id}`)
     } catch (err) {
       setError(err.message)
+    } finally {
+      setIsPublishing(false)
     }
   }
 
@@ -308,7 +326,7 @@ export function EditPost() {
           <p className="eyebrow">Editor</p>
           <h1>{isNew ? '新建文章' : '编辑文章'}</h1>
         </div>
-        <button className="button primary" onClick={save}>
+        <button className="button primary" onClick={openPreview}>
           <Save size={17} />
           保存
         </button>
@@ -427,6 +445,7 @@ export function EditPost() {
             : <p className="muted">{'\u8f93\u5165 Mermaid \u4ee3\u7801\u540e\u5c06\u5728\u8fd9\u91cc\u9884\u89c8\u3002'}</p>}
         </section>
       )}
+      {preview && <PostPreviewModal preview={preview} tags={tags.filter((tag) => preview.tag_ids.includes(tag.id))} onClose={() => setPreview(null)} onConfirm={save} isPublishing={isPublishing} />}
     </section>
   )
 }
