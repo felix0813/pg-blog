@@ -2,6 +2,8 @@ import React from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Search as SearchIcon } from 'lucide-react'
 import { get } from '../lib/api.js'
+import { HighlightedText } from '../components/HighlightedText.jsx'
+import { containsSearchTerm } from '../lib/searchHighlight.js'
 
 export function SearchPage() {
   const [params, setParams] = useSearchParams()
@@ -62,6 +64,11 @@ export function SearchPage() {
     setCursorHistory(history)
   }
 
+  function resultExcerpt(item) {
+    if (containsSearchTerm(item.summary, query)) return item.summary
+    return item.snippet || item.summary || "\u6ca1\u6709\u6458\u8981"
+  }
+
   return (
     <section className="searchPage">
       <div className="sectionHeader">
@@ -83,13 +90,13 @@ export function SearchPage() {
         {items.map((item) => (
           <article className="searchResult" key={item.id}>
             <div className="postTitleLine">
-              <Link className="postTitle" to={`/post/${item.id}`}>{item.title}</Link>
+              <Link className="postTitle" to={"/post/" + item.id}><HighlightedText text={item.title} query={query} /></Link>
               <span className={`statusBadge ${item.status}`}>{item.match_type === 'semantic' ? '语义匹配' : '关键词匹配'}</span>
             </div>
-            <p>{item.summary || item.snippet || '没有摘要'}</p>
+            <p><HighlightedText text={resultExcerpt(item)} query={query} /></p>
             <div className="resultMeta">
-              {item.category && <span>{item.category}</span>}
-              {(item.tags || []).map((tag) => <span key={tag}>#{tag}</span>)}
+              {item.category && <span><HighlightedText text={item.category} query={query} /></span>}
+              {(item.tags || []).map((tag) => <span key={tag}>#<HighlightedText text={tag} query={query} /></span>)}
               <time>{new Date(item.published_at || item.created_at).toLocaleDateString()}</time>
             </div>
           </article>

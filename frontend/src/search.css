@@ -8,6 +8,7 @@
 .searchResults { display: grid; gap: 12px; margin-top: 22px; }
 .searchResult { padding: 20px; border: 1px solid var(--line); border-radius: 18px; background: color-mix(in srgb, var(--panelSolid) 78%, transparent); }
 .searchResult p { color: var(--muted); line-height: 1.65; }
+.searchHighlight { padding: 1px 3px; border-radius: 4px; background: color-mix(in srgb, var(--accent) 28%, transparent); color: var(--text); font-weight: 750; }
 .resultMeta { display: flex; flex-wrap: wrap; gap: 8px 12px; color: var(--muted); font-size: 13px; }
 .resultMeta time { margin-left: auto; }
 .relatedPosts { margin-top: 48px; padding-top: 28px; border-top: 1px solid var(--line); }

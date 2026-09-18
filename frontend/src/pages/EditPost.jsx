@@ -31,10 +31,11 @@ import { PostPreviewModal } from '../components/PostPreviewModal.jsx'
 import { RevisionHistory } from '../components/RevisionHistory.jsx'
 import { markdownToPost, postToMarkdown } from '../lib/markdown.js'
 import { useUnsavedPostChanges } from '../lib/useUnsavedPostChanges.js'
+import { deleteDraft, getDraft, saveDraft } from '../lib/draftStorage.js'
 
 const emptyDoc = { type: 'doc', content: [{ type: 'paragraph' }] }
 
-export function EditPost() {
+export function EditPost({ user }) {
   const { id } = useParams()
   const navigate = useNavigate()
   const isNew = id === 'new'
@@ -57,8 +58,10 @@ export function EditPost() {
   const [isPublishing, setIsPublishing] = React.useState(false)
   const [revisions, setRevisions] = React.useState(null)
   const [isRestoring, setIsRestoring] = React.useState(false)
+  const [postReady, setPostReady] = React.useState(isNew)
+  const [draftChecked, setDraftChecked] = React.useState(false)
   const importInputRef = React.useRef(null)
-  const [, setEditorRevision] = React.useState(0)
+  const [editorRevision, setEditorRevision] = React.useState(0)
 
   const editor = useEditor({
     extensions: [
@@ -103,9 +106,35 @@ export function EditPost() {
       setMeta(loadedMeta)
       editor.commands.setContent(data.content_json || data.content_html || emptyDoc)
       markBaseline(loadedMeta, editor.getJSON())
-    }).catch((err) => { if (!cancelled) setError(err.message) })
+      setPostReady(true)
+    }).catch((err) => { if (!cancelled) { setError(err.message); setPostReady(true) } })
     return () => { cancelled = true }
   }, [editor, id, isNew])
+
+  React.useEffect(() => {
+    if (!editor || !user?.id || !postReady || draftChecked) return
+    let cancelled = false
+    getDraft(user.id, id).then(async (draft) => {
+      if (cancelled || !draft?.payload?.meta || !draft.payload.content_json) return
+      if (window.confirm("\u53d1\u73b0\u672c\u5730\u8349\u7a3f\uff0c\u662f\u5426\u6062\u590d\u7ee7\u7eed\u7f16\u8f91\uff1f")) {
+        setMeta(draft.payload.meta)
+        editor.commands.setContent(draft.payload.content_json)
+        setMessage("\u5df2\u6062\u590d\u672c\u5730\u8349\u7a3f")
+      } else {
+        await deleteDraft(user.id, id).catch(() => undefined)
+      }
+    }).catch(() => undefined).finally(() => { if (!cancelled) setDraftChecked(true) })
+    return () => { cancelled = true }
+  }, [editor, user?.id, id, postReady, draftChecked])
+
+  React.useEffect(() => {
+    if (!editor || !user?.id || !draftChecked) return
+    const timer = window.setInterval(() => {
+      if (!isDirty) return
+      saveDraft(user.id, id, { meta, content_json: editor.getJSON() }).catch(() => undefined)
+    }, 10000)
+    return () => window.clearInterval(timer)
+  }, [editor, user?.id, id, draftChecked, isDirty, meta, editorRevision])
 
   function buildPostBody() {
     if (!editor) return null
@@ -137,6 +166,7 @@ export function EditPost() {
         : await put(`/api/posts/${id}`, preview)
       setMessage("\u5df2\u4fdd\u5b58\uff0c\u7f13\u5b58\u5df2\u5237\u65b0")
       setPreview(null)
+      if (user?.id) await deleteDraft(user.id, id).catch(() => undefined)
       if (finishSave(meta, preview.content_json)) navigate(`/post/${data.id}`)
     } catch (err) {
       setError(err.message)
@@ -551,7 +581,7 @@ export function EditPost() {
   )
 }
 
-export function EditPostRoute() {
+export function EditPostRoute({ user }) {
   const { id } = useParams()
-  return <EditPost key={id} />
+  return <EditPost key={id} user={user} />
 }
