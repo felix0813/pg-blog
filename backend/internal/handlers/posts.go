@@ -140,7 +140,7 @@ func (h *Handler) CreatePost(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	post, err := h.savePost(c, userID, 0, req)
+	post, err := h.savePost(c, userID, 0, req, nil)
 	if err != nil {
 		log.Printf("create post failed user_id=%d title=%q slug=%q: %v", userID, req.Title, req.Slug, err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -160,7 +160,7 @@ func (h *Handler) UpdatePost(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	post, err := h.savePost(c, userID, id, req)
+	post, err := h.savePost(c, userID, id, req, nil)
 	if err != nil {
 		log.Printf("update post failed user_id=%d post_id=%d title=%q slug=%q: %v", userID, id, req.Title, req.Slug, err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -185,7 +185,7 @@ func (h *Handler) DeletePost(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
-func (h *Handler) savePost(c *gin.Context, userID int64, postID int64, req postRequest) (models.Post, error) {
+func (h *Handler) savePost(c *gin.Context, userID int64, postID int64, req postRequest, restoredFrom *int64) (models.Post, error) {
 	status := req.Status
 	if status == "" {
 		status = "published"
@@ -193,6 +193,7 @@ func (h *Handler) savePost(c *gin.Context, userID int64, postID int64, req postR
 	if !isValidPostStatus(status) {
 		return models.Post{}, fmt.Errorf("invalid post status")
 	}
+	req.Status = status
 	cleanHTML := h.policy.Sanitize(req.ContentHTML)
 	if req.SeriesPosition < 0 {
 		return models.Post{}, fmt.Errorf("series_position must be non-negative")
@@ -248,6 +249,10 @@ func (h *Handler) savePost(c *gin.Context, userID int64, postID int64, req postR
 			return models.Post{}, err
 		}
 	}
+	if err := h.recordRevision(c, tx, id, req, cleanHTML, restoredFrom); err != nil {
+		return models.Post{}, err
+	}
+
 	jsonKey := storage.ArticleKey(userID, id, "json")
 	htmlKey := storage.ArticleKey(userID, id, "html")
 	if _, err := tx.Exec(c, `UPDATE posts SET oss_json_key=$1, oss_html_key=$2 WHERE id=$3`, jsonKey, htmlKey, id); err != nil {

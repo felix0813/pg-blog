@@ -100,3 +100,4 @@ CREATE TRIGGER posts_set_updated_at BEFORE UPDATE ON posts FOR EACH ROW EXECUTE 
 \ir migrations/003_qwen37_embedding.sql
 \ir migrations/004_search_backfill.sql
 \ir migrations/005_series.sql
+\ir migrations/006_post_revisions.sql

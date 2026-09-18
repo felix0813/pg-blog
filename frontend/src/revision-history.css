@@ -1,0 +1,7 @@
+.revisionHistory { margin-top: 24px; padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--panelSolid); }
+.revisionHistory h2 { margin: 0 0 12px; font-size: 18px; }
+.revisionHistory ol { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.revisionHistory li { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; }
+.revisionHistory p, .revisionHistory small { display: block; margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+.restoreBadge { margin-left: 8px; padding: 3px 7px; border-radius: 999px; background: var(--accentSoft); color: var(--accent); font-size: 12px; }
+@media (max-width: 640px) { .revisionHistory li { align-items: flex-start; flex-direction: column; } }

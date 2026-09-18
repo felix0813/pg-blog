@@ -51,6 +51,16 @@ type SeriesPost struct {
 	Position int    `json:"position"`
 }
 
+type PostRevision struct {
+	ID                     int64     `json:"id"`
+	RevisionNumber         int       `json:"revision_number"`
+	Title                  string    `json:"title"`
+	Status                 string    `json:"status"`
+	RevisionType           string    `json:"revision_type"`
+	RestoredFromRevisionID *int64    `json:"restored_from_revision_id"`
+	CreatedAt              time.Time `json:"created_at"`
+}
+
 type Post struct {
 	ID             int64           `json:"id"`
 	UserID         int64           `json:"user_id"`

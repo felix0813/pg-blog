@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test src/lib/diagramRenderers.test.js src/lib/editorBlocks.test.js src/lib/postSnapshot.test.js src/lib/postFilters.test.js src/lib/articleOutline.test.js"
+    "test": "node --test src/lib/diagramRenderers.test.js src/lib/editorBlocks.test.js src/lib/postSnapshot.test.js src/lib/postFilters.test.js src/lib/articleOutline.test.js src/lib/markdown.test.js"
   },
   "dependencies": {
     "@tiptap/extension-link": "^2.5.8",

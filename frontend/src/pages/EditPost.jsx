@@ -28,6 +28,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { DiagramBlock } from '../components/DiagramBlock.jsx'
 import { insertMermaidBlock, continueWritingAfterCode } from '../lib/editorBlocks.js'
 import { PostPreviewModal } from '../components/PostPreviewModal.jsx'
+import { RevisionHistory } from '../components/RevisionHistory.jsx'
+import { markdownToPost, postToMarkdown } from '../lib/markdown.js'
 import { useUnsavedPostChanges } from '../lib/useUnsavedPostChanges.js'
 
 const emptyDoc = { type: 'doc', content: [{ type: 'paragraph' }] }
@@ -53,6 +55,9 @@ export function EditPost() {
   const [error, setError] = React.useState('')
   const [preview, setPreview] = React.useState(null)
   const [isPublishing, setIsPublishing] = React.useState(false)
+  const [revisions, setRevisions] = React.useState(null)
+  const [isRestoring, setIsRestoring] = React.useState(false)
+  const importInputRef = React.useRef(null)
   const [, setEditorRevision] = React.useState(0)
 
   const editor = useEditor({
@@ -198,6 +203,94 @@ export function EditPost() {
     }
   }
 
+  async function loadRevisions() {
+    if (isNew) return
+    try {
+      const data = await get("/api/posts/" + id + "/revisions")
+      setRevisions(data.items || [])
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function restoreRevision(revision) {
+    if (!editor || !window.confirm("\u6062\u590d\u540e\u4f1a\u521b\u5efa\u4e00\u4e2a\u65b0\u7248\u672c\uff0c\u4e0d\u4f1a\u8986\u76d6\u539f\u7248\u672c\u3002\u786e\u5b9a\u7ee7\u7eed\u5417\uff1f")) return
+    setError("")
+    setIsRestoring(true)
+    try {
+      const data = await post("/api/posts/" + id + "/revisions/" + revision.id + "/restore", {})
+      const restoredMeta = {
+        title: data.title, slug: data.slug, summary: data.summary, status: data.status,
+        category_id: data.category_id || "", series_id: data.series_id || "",
+        series_position: data.series_position || 0, tag_ids: (data.tags || []).map((tag) => tag.id),
+      }
+      setMeta(restoredMeta)
+      editor.commands.setContent(data.content_json || emptyDoc)
+      markBaseline(restoredMeta, editor.getJSON())
+      setMessage("\u5df2\u521b\u5efa\u6062\u590d\u7248\u672c")
+      await loadRevisions()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setIsRestoring(false)
+    }
+  }
+
+  function downloadMarkdown(markdown, filename) {
+    const url = URL.createObjectURL(new Blob([markdown], { type: "text/markdown;charset=utf-8" }))
+    const link = document.createElement("a")
+    link.href = url
+    link.download = filename
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function currentExportPost() {
+    const body = buildPostBody()
+    if (!body) return null
+    return { ...body, tags: tags.filter((tag) => body.tag_ids.includes(tag.id)), series: series.find((item) => item.id === body.series_id) }
+  }
+
+  async function exportMarkdown(includeSeries) {
+    const current = currentExportPost()
+    if (!current) return
+    try {
+      if (isNew || !includeSeries) {
+        downloadMarkdown(postToMarkdown(current), (current.slug || "article") + ".md")
+        return
+      }
+      const data = await get("/api/posts/" + id + "/export?include_series=true")
+      const markdown = (data.items || []).map(postToMarkdown).join("\n<!-- next article -->\n\n")
+      downloadMarkdown(markdown, (current.series?.slug || current.slug || "series") + ".md")
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function importMarkdown(event) {
+    const file = event.target.files?.[0]
+    if (!file || !editor) return
+    try {
+      const parsed = markdownToPost(await file.text())
+      const importedTags = String(parsed.frontmatter.tags || "").split(",").map((name) => name.trim()).filter(Boolean)
+      const importedSeries = series.find((item) => item.slug === parsed.frontmatter.series)
+      setMeta({
+        ...meta,
+        title: parsed.frontmatter.title || meta.title, slug: parsed.frontmatter.slug || meta.slug,
+        summary: parsed.frontmatter.summary || "", status: parsed.frontmatter.status || meta.status,
+        tag_ids: tags.filter((tag) => importedTags.includes(tag.name)).map((tag) => tag.id),
+        series_id: importedSeries ? String(importedSeries.id) : "",
+        series_position: Number(parsed.frontmatter.series_position) || 0,
+      })
+      editor.commands.setContent(parsed.content)
+      setMessage("\u5df2\u5bfc\u5165 Markdown\uff0c\u8bf7\u786e\u8ba4\u540e\u4fdd\u5b58")
+    } catch (err) {
+      setError(err.message || "Markdown \u5bfc\u5165\u5931\u8d25")
+    } finally {
+      event.target.value = ""
+    }
+  }
+
   const toolbarGroups = [
     [
       {
@@ -326,14 +419,22 @@ export function EditPost() {
           <p className="eyebrow">Editor</p>
           <h1>{isNew ? '新建文章' : '编辑文章'}</h1>
         </div>
-        <button className="button primary" onClick={openPreview}>
-          <Save size={17} />
-          保存
-        </button>
+        <input ref={importInputRef} type="file" accept=".md,text/markdown,text/plain" hidden onChange={importMarkdown} />
+        <div className="actions">
+          <button className="button" type="button" onClick={() => importInputRef.current?.click()}>{"\u5bfc\u5165 Markdown"}</button>
+          <button className="button" type="button" onClick={() => exportMarkdown(false)}>{"\u5bfc\u51fa Markdown"}</button>
+          {meta.series_id && <button className="button" type="button" onClick={() => exportMarkdown(true)}>{"\u5bfc\u51fa\u7cfb\u5217"}</button>}
+          {!isNew && <button className="button" type="button" onClick={loadRevisions}>{"\u5386\u53f2\u7248\u672c"}</button>}
+          <button className="button primary" type="button" onClick={openPreview}>
+            <Save size={17} />
+            {"\u4fdd\u5b58"}
+          </button>
+        </div>
       </div>
       {message && <p className="success">{message}</p>}
       {isDirty && <p className="muted" role="status">{'\u6709\u672a\u4fdd\u5b58\u7684\u66f4\u6539'}</p>}
       {error && <p className="error">{error}</p>}
+      <RevisionHistory revisions={revisions} onRestore={restoreRevision} isRestoring={isRestoring} />
       <div className="metaGrid">
         <input
           placeholder="标题"
