@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -59,6 +60,7 @@ func (h *Handler) ListDailyLearningRecords(c *gin.Context) {
 	}
 	rows, err := h.db.Query(c, `SELECT id, content, urls, study_date, created_at, updated_at FROM daily_learning_records WHERE user_id=$1 AND study_date >= CURRENT_DATE - ($2 - 1) ORDER BY study_date DESC, created_at ASC`, userID, days)
 	if err != nil {
+		log.Printf("list daily learning records for user %d: %v", userID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "加载每日学习记录失败"})
 		return
 	}

@@ -18,8 +18,8 @@
 .calendarLegend { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; white-space: nowrap; }
 .calendarLegend i { display: inline-block; width: 12px; height: 12px; border-radius: 4px; background: #e98080; }
 .calendarLegend i[data-level="1"] { background: #ccebd8; }.calendarLegend i[data-level="5"] { background: #167448; }
-.calendarWrap { margin-top: 22px; overflow-x: auto; }
-.weekdayLabels, .learningCalendar { display: grid; grid-template-columns: repeat(7, minmax(70px, 1fr)); gap: 8px; min-width: 560px; }
+.calendarWrap { min-width: 0; margin-top: 22px; overflow: visible; }
+.weekdayLabels, .learningCalendar { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; min-width: 0; }
 .weekdayLabels { margin-bottom: 7px; }.weekdayLabels span { color: var(--muted); font-size: 12px; font-weight: 750; text-align: center; }
 .calendarBlank { min-height: 82px; }
 .calendarDay { position: relative; display: grid; grid-template-columns: 1fr auto; align-content: space-between; min-height: 82px; padding: 10px; overflow: visible; border: 1px solid transparent; border-radius: 15px; color: #173429; text-align: left; }
@@ -32,4 +32,4 @@
 .learningModal { position: relative; width: min(650px, 100%); max-height: min(760px, calc(100vh - 36px)); padding: 30px; overflow-y: auto; background: var(--panelSolid); }
 .modalClose { position: absolute; top: 16px; right: 16px; }.recordList { display: grid; gap: 12px; margin-top: 20px; }.learningRecord { padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: color-mix(in srgb, var(--accentSoft) 45%, var(--panelSolid)); }.learningRecord p { margin: 0; white-space: pre-wrap; line-height: 1.65; }.learningRecord ul { display: grid; gap: 7px; margin: 13px 0 0; padding: 0; list-style: none; }.learningRecord a { display: inline-flex; gap: 6px; color: var(--accent); overflow-wrap: anywhere; font-size: 13px; }.recordActions { display: flex; gap: 6px; margin-top: 12px; }.dangerText { color: #c93939; }.emptyDay { margin: 24px 0 0; color: var(--muted); line-height: 1.6; }.modalEditForm { display: grid; gap: 17px; }.modalEditForm h2 { margin-top: -10px; }
 @media (max-width: 880px) { .dailyLearningGrid { grid-template-columns: 1fr; } }
-@media (max-width: 600px) { .dailyEntryCard, .learningCalendarCard, .learningModal { padding: 19px; border-radius: 20px; } .calendarLegend { display: none; } }
+@media (max-width: 600px) { .dailyEntryCard, .learningCalendarCard, .learningModal { padding: 19px; border-radius: 20px; } .calendarLegend { display: none; } .weekdayLabels, .learningCalendar { gap: 5px; } .calendarBlank, .calendarDay { min-height: 64px; } .calendarDay { padding: 7px; border-radius: 12px; } .calendarDay time { font-size: 17px; } .calendarDay small { font-size: 10px; } }
