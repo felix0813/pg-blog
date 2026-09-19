@@ -1,6 +1,8 @@
 import React from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { del, get } from '../lib/api.js'
+import { del, get, post } from '../lib/api.js'
+import { LearningStatus } from '../components/LearningStatus.jsx'
+import { learningGoalMap } from '../lib/learningGoals.js'
 import { QuillIcon } from '../components/Icons.jsx'
 import { RenderedPostContent } from '../components/RenderedPostContent.jsx'
 import { ArticleTableOfContents } from '../components/ArticleTableOfContents.jsx'
@@ -14,6 +16,7 @@ export function PostDetail() {
   const [error, setError] = React.useState('')
   const [headings, setHeadings] = React.useState([])
   const [seriesData, setSeriesData] = React.useState(null)
+  const [learningGoals, setLearningGoals] = React.useState(null)
   const handleHeadingsChange = React.useCallback((items) => setHeadings(items), [])
 
   React.useEffect(() => {
@@ -24,7 +27,28 @@ export function PostDetail() {
   }, [id])
   React.useEffect(() => { get("/api/posts/" + id + "/related?limit=6").then((data) => setRelated(data.items || [])).catch(() => setRelated([])) }, [id])
   React.useEffect(() => { get("/api/posts/" + id + "/series").then(setSeriesData).catch(() => setSeriesData(null)) }, [id])
+  React.useEffect(() => { get("/api/learning-goals").then((data) => setLearningGoals(learningGoalMap(data.items))).catch(() => setLearningGoals(null)) }, [id])
 
+
+  async function toggleLearningGoal() {
+    if (learningGoals === null) return
+    try {
+      if (Object.prototype.hasOwnProperty.call(learningGoals, String(id))) {
+        await del("/api/posts/" + id + "/learning-goal")
+        setLearningGoals((items) => { const next = { ...items }; delete next[String(id)]; return next })
+      } else {
+        const data = await post("/api/posts/" + id + "/learning-goal", {})
+        setLearningGoals((items) => ({ ...items, [String(id)]: data.last_learned_at || null }))
+      }
+    } catch (err) { setError(err.message) }
+  }
+
+  async function markLearned() {
+    try {
+      const data = await post("/api/posts/" + id + "/learned", {})
+      setLearningGoals((items) => ({ ...items, [String(id)]: data.last_learned_at }))
+    } catch (err) { setError(err.message) }
+  }
 
   async function deletePost() {
     if (!window.confirm('确定删除这篇文章吗？')) return
@@ -74,6 +98,10 @@ export function PostDetail() {
           )}
         </div>
         <div className="actions">
+          {learningGoals !== null && <>
+            <button className="button" type="button" onClick={toggleLearningGoal}>{Object.prototype.hasOwnProperty.call(learningGoals, String(id)) ? "\u53d6\u6d88\u5b66\u4e60\u76ee\u6807" : "\u8bbe\u4e3a\u5b66\u4e60\u76ee\u6807"}</button>
+            {Object.prototype.hasOwnProperty.call(learningGoals, String(id)) && <button className="button primary" type="button" onClick={markLearned}>{"\u5df2\u5b66\u4e60"}</button>}
+          </>}
           <Link className="button" to={`/edit/${post.id}`}>
             编辑
           </Link>
@@ -83,6 +111,7 @@ export function PostDetail() {
         </div>
       </div>
       {error && <p className="error">{error}</p>}
+      {learningGoals !== null && <LearningStatus active={Object.prototype.hasOwnProperty.call(learningGoals, String(id))} lastLearnedAt={learningGoals[String(id)]} />}
       {post.summary && <p className="articleSummary">{post.summary}</p>}
       <RenderedPostContent html={post.content_html} onHeadingsChange={handleHeadingsChange} />
       <SeriesNavigation data={seriesData} currentPostID={post.id} />

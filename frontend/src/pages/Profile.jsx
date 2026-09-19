@@ -2,11 +2,15 @@ import React from 'react'
 import { get } from '../lib/api.js'
 import { PostList } from '../components/PostList.jsx'
 import { QuillIcon } from '../components/Icons.jsx'
+import { learningGoalMap } from '../lib/learningGoals.js'
 
 export function Profile({ user }) {
   const [posts, setPosts] = React.useState([])
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState('')
+  const [learningPosts, setLearningPosts] = React.useState([])
+  const [learningGoals, setLearningGoals] = React.useState({})
+  const [learningLoading, setLearningLoading] = React.useState(true)
 
   React.useEffect(() => {
     const controller = new AbortController()
@@ -23,6 +27,15 @@ export function Profile({ user }) {
     return () => controller.abort()
   }, [])
 
+  React.useEffect(() => {
+    const controller = new AbortController()
+    Promise.all([get("/api/learning-goals", { signal: controller.signal }), get("/api/learning-goals/posts", { signal: controller.signal })])
+      .then(([goals, targets]) => { if (!controller.signal.aborted) { setLearningGoals(learningGoalMap(goals.items)); setLearningPosts(targets.items || []) } })
+      .catch(() => { if (!controller.signal.aborted) { setLearningGoals({}); setLearningPosts([]) } })
+      .finally(() => { if (!controller.signal.aborted) setLearningLoading(false) })
+    return () => controller.abort()
+  }, [])
+
   return (
     <section className="contentPanel profilePosts">
       <div className="sectionHeader">
@@ -35,7 +48,11 @@ export function Profile({ user }) {
         </div>
       </div>
       {error && <p className="error">{error}</p>}
-      {loading ? <p className="muted">加载文章中...</p> : <PostList posts={posts} />}
+      {loading ? <p className="muted">加载文章中...</p> : <PostList posts={posts} learningGoals={learningGoals} />}
+      <section className="learningPanel">
+        <h2>{"\u5b66\u4e60\u76ee\u6807"}</h2>
+        {learningLoading ? <p className="muted">{"\u52a0\u8f7d\u5b66\u4e60\u76ee\u6807\u4e2d..."}</p> : <PostList posts={learningPosts} learningGoals={learningGoals} />}
+      </section>
     </section>
   )
 }

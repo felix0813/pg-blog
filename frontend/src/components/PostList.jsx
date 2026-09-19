@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { LearningStatus } from './LearningStatus.jsx';
 
 const statusLabels = {
   draft: '草稿',
@@ -6,7 +7,7 @@ const statusLabels = {
   archived: '已归档',
 };
 
-export function PostList({ posts }) {
+export function PostList({ posts, learningGoals = {} }) {
   if (!posts?.length) {
     return <p className="muted">暂无文章。</p>;
   }
@@ -18,6 +19,7 @@ export function PostList({ posts }) {
             <div className="postTitleLine">
               <Link className="postTitle" to={`/post/${post.id}`}>{post.title}</Link>
               <span className={`statusBadge ${post.status || 'draft'}`}>{statusLabels[post.status] || post.status || '草稿'}</span>
+              <LearningStatus active={Object.prototype.hasOwnProperty.call(learningGoals, String(post.id))} lastLearnedAt={learningGoals[String(post.id)]} />
             </div>
             <p>{post.summary || '没有摘要'}</p>
           </div>

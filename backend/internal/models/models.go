@@ -61,6 +61,11 @@ type PostRevision struct {
 	CreatedAt              time.Time `json:"created_at"`
 }
 
+type LearningGoal struct {
+	PostID        int64      `json:"post_id"`
+	LastLearnedAt *time.Time `json:"last_learned_at"`
+}
+
 type Post struct {
 	ID             int64           `json:"id"`
 	UserID         int64           `json:"user_id"`
@@ -82,4 +87,6 @@ type Post struct {
 	Category       *Category       `json:"category,omitempty"`
 	Series         *Series         `json:"series,omitempty"`
 	Tags           []Tag           `json:"tags"`
+	IsLearningGoal bool            `json:"is_learning_goal,omitempty"`
+	LastLearnedAt  *time.Time      `json:"last_learned_at,omitempty"`
 }

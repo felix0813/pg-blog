@@ -266,32 +266,28 @@ export function EditPost({ user }) {
     }
   }
 
+  function markdownFilename(title) {
+    return (title || "article").replace(/[<>:"\/\\|?*]/g, "_").trim() || "article"
+  }
+
   function downloadMarkdown(markdown, filename) {
     const url = URL.createObjectURL(new Blob([markdown], { type: "text/markdown;charset=utf-8" }))
     const link = document.createElement("a")
     link.href = url
-    link.download = filename
+    link.download = markdownFilename(filename) + ".md"
     link.click()
-    URL.revokeObjectURL(url)
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
-  function currentExportPost() {
-    const body = buildPostBody()
-    if (!body) return null
-    return { ...body, tags: tags.filter((tag) => body.tag_ids.includes(tag.id)), series: series.find((item) => item.id === body.series_id) }
-  }
-
-  async function exportMarkdown(includeSeries) {
-    const current = currentExportPost()
-    if (!current) return
+  async function exportMarkdown() {
+    if (isNew || meta.status !== "published") return
+    const includeSeries = Boolean(meta.series_id) && window.confirm("\u6b64\u6587\u7ae0\u5c5e\u4e8e\u7cfb\u5217\uff0c\u662f\u5426\u4e00\u8d77\u5bfc\u51fa\u7cfb\u5217\u4e2d\u6240\u6709\u5df2\u53d1\u5e03\u6587\u7ae0\uff1f")
     try {
-      if (isNew || !includeSeries) {
-        downloadMarkdown(postToMarkdown(current), (current.slug || "article") + ".md")
-        return
+      const data = await get("/api/posts/" + id + "/export?include_series=" + includeSeries)
+      for (const item of data.items || []) {
+        downloadMarkdown(postToMarkdown(item), item.title)
+        await new Promise((resolve) => window.setTimeout(resolve, 180))
       }
-      const data = await get("/api/posts/" + id + "/export?include_series=true")
-      const markdown = (data.items || []).map(postToMarkdown).join("\n<!-- next article -->\n\n")
-      downloadMarkdown(markdown, (current.series?.slug || current.slug || "series") + ".md")
     } catch (err) {
       setError(err.message)
     }
@@ -452,8 +448,7 @@ export function EditPost({ user }) {
         <input ref={importInputRef} type="file" accept=".md,text/markdown,text/plain" hidden onChange={importMarkdown} />
         <div className="actions">
           <button className="button" type="button" onClick={() => importInputRef.current?.click()}>{"\u5bfc\u5165 Markdown"}</button>
-          <button className="button" type="button" onClick={() => exportMarkdown(false)}>{"\u5bfc\u51fa Markdown"}</button>
-          {meta.series_id && <button className="button" type="button" onClick={() => exportMarkdown(true)}>{"\u5bfc\u51fa\u7cfb\u5217"}</button>}
+          {!isNew && meta.status === "published" && <button className="button" type="button" onClick={exportMarkdown}>{"\u5bfc\u51fa Markdown"}</button>}
           {!isNew && <button className="button" type="button" onClick={loadRevisions}>{"\u5386\u53f2\u7248\u672c"}</button>}
           <button className="button primary" type="button" onClick={openPreview}>
             <Save size={17} />

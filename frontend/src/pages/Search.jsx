@@ -4,6 +4,8 @@ import { Search as SearchIcon } from 'lucide-react'
 import { get } from '../lib/api.js'
 import { HighlightedText } from '../components/HighlightedText.jsx'
 import { containsSearchTerm } from '../lib/searchHighlight.js'
+import { LearningStatus } from '../components/LearningStatus.jsx'
+import { learningGoalMap } from '../lib/learningGoals.js'
 
 export function SearchPage() {
   const [params, setParams] = useSearchParams()
@@ -15,8 +17,11 @@ export function SearchPage() {
   const [cursorHistory, setCursorHistory] = React.useState([])
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState('')
+  const [learningGoals, setLearningGoals] = React.useState({})
 
   React.useEffect(() => setInput(query), [query])
+
+  React.useEffect(() => { get("/api/learning-goals").then((data) => setLearningGoals(learningGoalMap(data.items))).catch(() => setLearningGoals({})) }, [])
 
   React.useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -92,6 +97,7 @@ export function SearchPage() {
             <div className="postTitleLine">
               <Link className="postTitle" to={"/post/" + item.id}><HighlightedText text={item.title} query={query} /></Link>
               <span className={`statusBadge ${item.status}`}>{item.match_type === 'semantic' ? '语义匹配' : '关键词匹配'}</span>
+              <LearningStatus active={Object.prototype.hasOwnProperty.call(learningGoals, String(item.id))} lastLearnedAt={learningGoals[String(item.id)]} />
             </div>
             <p><HighlightedText text={resultExcerpt(item)} query={query} /></p>
             <div className="resultMeta">

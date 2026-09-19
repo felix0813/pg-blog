@@ -14,13 +14,13 @@ func (h *Handler) ExportPosts(c *gin.Context) {
 	userID := middleware.CurrentUserID(c)
 	postID, _ := strconv.ParseInt(c.Param("id"), 10, 64)
 	post, err := h.fetchPost(c, postID)
-	if err != nil || post.UserID != userID {
+	if err != nil || post.UserID != userID || post.Status != "published" {
 		c.JSON(http.StatusNotFound, gin.H{"error": "post not found"})
 		return
 	}
 	items := []models.Post{post}
 	if c.Query("include_series") == "true" && post.SeriesID != nil {
-		rows, err := h.db.Query(c, `SELECT id FROM posts WHERE series_id=$1 AND user_id=$2 ORDER BY series_position,id`, *post.SeriesID, userID)
+		rows, err := h.db.Query(c, `SELECT id FROM posts WHERE series_id=$1 AND user_id=$2 AND status='published' ORDER BY series_position,id`, *post.SeriesID, userID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "list series export posts failed"})
 			return

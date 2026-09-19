@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { get } from '../lib/api.js'
 import { PostList } from '../components/PostList.jsx'
 import { QuillIcon } from '../components/Icons.jsx'
+import { learningGoalMap } from '../lib/learningGoals.js'
 import { postFiltersFromSearch, postFiltersToSearch } from '../lib/postFilters.js'
 
 export function Posts() {
@@ -10,6 +11,7 @@ export function Posts() {
   const [hasMore, setHasMore] = React.useState(false)
   const [categories, setCategories] = React.useState([])
   const [tags, setTags] = React.useState([])
+  const [learningGoals, setLearningGoals] = React.useState({})
   const [searchParams, setSearchParams] = useSearchParams()
   const filters = postFiltersFromSearch(searchParams)
 
@@ -22,6 +24,7 @@ export function Posts() {
   React.useEffect(() => {
     get('/api/categories').then((data) => setCategories(data.items || []))
     get('/api/tags').then((data) => setTags(data.items || []))
+    get("/api/learning-goals").then((data) => setLearningGoals(learningGoalMap(data.items))).catch(() => setLearningGoals({}))
   }, [])
 
   React.useEffect(() => {
@@ -93,7 +96,7 @@ export function Posts() {
           </select>
         </div>
       </div>
-      <PostList posts={posts} />
+      <PostList posts={posts} learningGoals={learningGoals} />
       <div className="pager">
         <button
           disabled={filters.page <= 1}
