@@ -66,6 +66,15 @@ type LearningGoal struct {
 	LastLearnedAt *time.Time `json:"last_learned_at"`
 }
 
+type DailyLearningRecord struct {
+	ID        int64     `json:"id"`
+	Content   string    `json:"content"`
+	URLs      []string  `json:"urls"`
+	StudyDate time.Time `json:"study_date"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type Post struct {
 	ID             int64           `json:"id"`
 	UserID         int64           `json:"user_id"`

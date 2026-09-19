@@ -102,3 +102,4 @@ CREATE TRIGGER posts_set_updated_at BEFORE UPDATE ON posts FOR EACH ROW EXECUTE 
 \ir migrations/005_series.sql
 \ir migrations/006_post_revisions.sql
 \ir migrations/007_learning_goals.sql
+\ir migrations/008_daily_learning_records.sql

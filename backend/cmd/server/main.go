@@ -81,6 +81,14 @@ func main() {
 	private.POST("/posts/:id/learning-goal", h.AddLearningGoal)
 	private.DELETE("/posts/:id/learning-goal", h.RemoveLearningGoal)
 	private.POST("/posts/:id/learned", h.MarkLearned)
+
+	private.GET("/daily-learning-records", h.ListDailyLearningRecords)
+
+	private.POST("/daily-learning-records", h.CreateDailyLearningRecord)
+
+	private.PUT("/daily-learning-records/:id", h.UpdateDailyLearningRecord)
+
+	private.DELETE("/daily-learning-records/:id", h.DeleteDailyLearningRecord)
 	private.POST("/posts/:id/revisions/:revisionID/restore", h.RestoreRevision)
 	private.DELETE("/posts/:id", h.DeletePost)
 	private.POST("/categories", h.CreateCategory)

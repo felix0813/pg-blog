@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"pg-blog/backend/internal/middleware"
@@ -78,12 +80,50 @@ func (h *Handler) RemoveLearningGoal(c *gin.Context) {
 
 func (h *Handler) MarkLearned(c *gin.Context) {
 	userID := middleware.CurrentUserID(c)
-	postID, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+	postID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || postID < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid post id"})
+		return
+	}
+
+	tx, err := h.db.Begin(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "start learning update failed"})
+		return
+	}
+	defer tx.Rollback(c)
+
 	now := time.Now()
-	tag, err := h.db.Exec(c, `UPDATE learning_goals SET last_learned_at=$1 WHERE user_id=$2 AND post_id=$3`, now, userID, postID)
+	tag, err := tx.Exec(c, `UPDATE learning_goals SET last_learned_at=$1 WHERE user_id=$2 AND post_id=$3`, now, userID, postID)
 	if err != nil || tag.RowsAffected() == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "learning goal not found"})
 		return
 	}
+
+	var title string
+	if err := tx.QueryRow(c, `SELECT title FROM posts WHERE id=$1`, postID).Scan(&title); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "read learned post failed"})
+		return
+	}
+	postURL := learnedPostURL(c, postID)
+	if _, err := tx.Exec(c, `INSERT INTO daily_learning_records (user_id, content, urls) VALUES ($1, $2, jsonb_build_array($3))`, userID, "学习文章："+title, postURL); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "add daily learning record failed"})
+		return
+	}
+	if err := tx.Commit(c); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "save learning status failed"})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{"post_id": postID, "last_learned_at": now})
+}
+
+func learnedPostURL(c *gin.Context, postID int64) string {
+	scheme := "http"
+	if c.Request.TLS != nil {
+		scheme = "https"
+	}
+	if forwarded := c.GetHeader("X-Forwarded-Proto"); forwarded != "" {
+		scheme = strings.TrimSpace(strings.Split(forwarded, ",")[0])
+	}
+	return fmt.Sprintf("%s://%s/myblog/post/%d", scheme, c.Request.Host, postID)
 }

@@ -1,0 +1,35 @@
+.dailyLearningPage { max-width: 1180px; margin: auto; }
+.dailyLearningGrid { display: grid; grid-template-columns: minmax(300px, .82fr) minmax(0, 1.45fr); gap: 24px; align-items: start; }
+.dailyEntryCard, .learningCalendarCard, .learningModal { background: var(--panel); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); }
+.dailyEntryCard { display: grid; gap: 17px; padding: 24px; }
+.dailyEntryCard label, .modalEditForm label { display: grid; gap: 8px; color: var(--muted); font-weight: 700; }
+.dailyEntryCard em, .modalEditForm em { color: #c93939; font-size: 12px; font-style: normal; }
+.dailyCardHeading { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+.dailyCardHeading h2, .learningModal h2 { margin: 0; letter-spacing: -.03em; }
+.dailyCardHeading > span { color: var(--muted); font-size: 13px; text-align: right; }
+.urlFields { display: grid; gap: 8px; }
+.urlLabel, .urlRow { display: flex; align-items: center; gap: 8px; }
+.urlLabel { justify-content: space-between; color: var(--muted); font-weight: 700; }
+.urlRow svg { flex: 0 0 auto; color: var(--accent); }
+.urlRow input { min-width: 0; flex: 1; }
+.textButton { display: inline-flex; align-items: center; gap: 4px; padding: 5px 7px; border: 0; background: transparent; color: var(--accent); font-size: 13px; font-weight: 750; }
+.iconButton.small { width: 32px; height: 32px; flex: 0 0 auto; }
+.learningCalendarCard { padding: 24px; min-width: 0; }
+.calendarLegend { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; white-space: nowrap; }
+.calendarLegend i { display: inline-block; width: 12px; height: 12px; border-radius: 4px; background: #e98080; }
+.calendarLegend i[data-level="1"] { background: #ccebd8; }.calendarLegend i[data-level="5"] { background: #167448; }
+.calendarWrap { margin-top: 22px; overflow-x: auto; }
+.weekdayLabels, .learningCalendar { display: grid; grid-template-columns: repeat(7, minmax(70px, 1fr)); gap: 8px; min-width: 560px; }
+.weekdayLabels { margin-bottom: 7px; }.weekdayLabels span { color: var(--muted); font-size: 12px; font-weight: 750; text-align: center; }
+.calendarBlank { min-height: 82px; }
+.calendarDay { position: relative; display: grid; grid-template-columns: 1fr auto; align-content: space-between; min-height: 82px; padding: 10px; overflow: visible; border: 1px solid transparent; border-radius: 15px; color: #173429; text-align: left; }
+.calendarDay time { font-size: 20px; font-weight: 850; }.calendarDay small { align-self: center; opacity: .72; font-size: 11px; font-weight: 700; }.calendarDay strong { grid-column: 1 / -1; align-self: end; font-size: 12px; }
+.calendarDay.level-0 { background: #f4b1b1; color: #752d2d; }.calendarDay.level-1 { background: #d9f0e1; }.calendarDay.level-2 { background: #aee0be; }.calendarDay.level-3 { background: #80c993; }.calendarDay.level-4 { background: #48a96c; }.calendarDay.level-5 { background: #167448; color: #fff; }
+.calendarDay.today { outline: 3px solid color-mix(in srgb, var(--accent) 35%, transparent); outline-offset: 2px; }
+.calendarDay::after { position: absolute; z-index: 3; bottom: calc(100% + 8px); left: 50%; width: max-content; max-width: 250px; padding: 8px 10px; border-radius: 9px; background: #1f2923; color: #fff; content: attr(data-tooltip); font-size: 12px; font-weight: 500; line-height: 1.45; text-align: left; transform: translateX(-50%); opacity: 0; pointer-events: none; transition: opacity .15s ease; }
+.calendarDay:hover::after, .calendarDay:focus-visible::after { opacity: 1; }
+.learningModalBackdrop { position: fixed; z-index: 30; inset: 0; display: grid; place-items: center; padding: 18px; background: rgba(16, 20, 18, .52); }
+.learningModal { position: relative; width: min(650px, 100%); max-height: min(760px, calc(100vh - 36px)); padding: 30px; overflow-y: auto; background: var(--panelSolid); }
+.modalClose { position: absolute; top: 16px; right: 16px; }.recordList { display: grid; gap: 12px; margin-top: 20px; }.learningRecord { padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: color-mix(in srgb, var(--accentSoft) 45%, var(--panelSolid)); }.learningRecord p { margin: 0; white-space: pre-wrap; line-height: 1.65; }.learningRecord ul { display: grid; gap: 7px; margin: 13px 0 0; padding: 0; list-style: none; }.learningRecord a { display: inline-flex; gap: 6px; color: var(--accent); overflow-wrap: anywhere; font-size: 13px; }.recordActions { display: flex; gap: 6px; margin-top: 12px; }.dangerText { color: #c93939; }.emptyDay { margin: 24px 0 0; color: var(--muted); line-height: 1.6; }.modalEditForm { display: grid; gap: 17px; }.modalEditForm h2 { margin-top: -10px; }
+@media (max-width: 880px) { .dailyLearningGrid { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .dailyEntryCard, .learningCalendarCard, .learningModal { padding: 19px; border-radius: 20px; } .calendarLegend { display: none; } }
