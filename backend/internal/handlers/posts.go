@@ -206,6 +206,13 @@ func (h *Handler) savePost(c *gin.Context, userID int64, postID int64, req postR
 		if err := h.db.QueryRow(c, `SELECT EXISTS(SELECT 1 FROM series WHERE id=$1 AND user_id=$2)`, *req.SeriesID, userID).Scan(&exists); err != nil || !exists {
 			return models.Post{}, fmt.Errorf("series not found")
 		}
+		var positionTaken bool
+		if err := h.db.QueryRow(c, `SELECT EXISTS(SELECT 1 FROM posts WHERE series_id=$1 AND series_position=$2 AND id<>$3)`, *req.SeriesID, req.SeriesPosition, postID).Scan(&positionTaken); err != nil {
+			return models.Post{}, err
+		}
+		if positionTaken {
+			return models.Post{}, fmt.Errorf("series_position already used in this series")
+		}
 	}
 	if err := validateDiagramContent(req.ContentJSON); err != nil {
 		return models.Post{}, err

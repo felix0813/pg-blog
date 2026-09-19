@@ -502,7 +502,11 @@ export function EditPost({ user }) {
           </select>
           <button className="iconButton" type="button" onClick={addSeries} title="\u6dfb\u52a0\u7cfb\u5217"><Plus size={16} /></button>
         </div>
-        <input type="number" min="0" placeholder={'\u7cfb\u5217\u6392\u5e8f'} value={meta.series_position} onChange={(e) => setMeta({ ...meta, series_position: e.target.value })} />
+        {meta.series_id && <label className="seriesPositionField">
+          <span>{'\u7cfb\u5217\u6392\u5e8f\u53f7'}</span>
+          <input type="number" min="0" value={meta.series_position} onChange={(e) => setMeta({ ...meta, series_position: e.target.value })} />
+          <small>{'\u7528\u4e8e\u7cfb\u5217\u76ee\u5f55\u3001\u4e0a\u4e00\u7bc7/\u4e0b\u4e00\u7bc7\u4e0e\u5bfc\u51fa\u987a\u5e8f\uff0c\u540c\u4e00\u7cfb\u5217\u4e0d\u53ef\u91cd\u590d\u3002'}</small>
+        </label>}
       </div>
       <textarea
         placeholder="摘要"
