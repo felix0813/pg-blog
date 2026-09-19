@@ -43,12 +43,15 @@ export function Profile({ user }) {
           <QuillIcon size={24} className="brandIcon" />
           <div>
             <p className="eyebrow">我的空间</p>
-            <h1>{user.display_name || user.username} 的文章</h1>
+            <h1>{"\u6211\u7684\u7a7a\u95f4"}</h1>
           </div>
         </div>
       </div>
       {error && <p className="error">{error}</p>}
-      {loading ? <p className="muted">加载文章中...</p> : <PostList posts={posts} learningGoals={learningGoals} />}
+      <section className="ownPosts">
+        <h2>{"\u6211\u7684\u6587\u7ae0"}</h2>
+        {loading ? <p className="muted">{"\u52a0\u8f7d\u6587\u7ae0\u4e2d..."}</p> : <PostList posts={posts} learningGoals={learningGoals} />}
+      </section>
       <section className="learningPanel">
         <h2>{"\u5b66\u4e60\u76ee\u6807"}</h2>
         {learningLoading ? <p className="muted">{"\u52a0\u8f7d\u5b66\u4e60\u76ee\u6807\u4e2d..."}</p> : <PostList posts={learningPosts} learningGoals={learningGoals} />}

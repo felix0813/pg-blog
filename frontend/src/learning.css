@@ -1,5 +1,8 @@
 .learningStatus { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 9px; font-size: 12px; font-weight: 750; }
 .learningStatus.pending { background: color-mix(in srgb, #d6a546 16%, var(--panelSolid)); color: #94670c; }
 .learningStatus.learned { background: color-mix(in srgb, var(--accent) 14%, var(--panelSolid)); color: var(--accent); }
-.learningPanel { margin-top: 28px; }
-.learningPanel h2 { margin: 0 0 14px; }
+.profilePosts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+.profilePosts > .sectionHeader, .profilePosts > .error { grid-column: 1 / -1; }
+.ownPosts, .learningPanel { min-width: 0; margin: 0; }
+.ownPosts h2, .learningPanel h2 { margin: 0 0 14px; }
+@media (max-width: 760px) { .profilePosts { grid-template-columns: 1fr; } }
