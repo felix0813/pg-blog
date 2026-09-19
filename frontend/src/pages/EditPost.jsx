@@ -298,11 +298,12 @@ export function EditPost({ user }) {
     if (!file || !editor) return
     try {
       const parsed = markdownToPost(await file.text())
+      const fileTitle = file.name.replace(/.[^.]+$/, "").trim()
       const importedTags = String(parsed.frontmatter.tags || "").split(",").map((name) => name.trim()).filter(Boolean)
       const importedSeries = series.find((item) => item.slug === parsed.frontmatter.series)
       setMeta({
         ...meta,
-        title: parsed.frontmatter.title || meta.title, slug: parsed.frontmatter.slug || meta.slug,
+        title: fileTitle || parsed.frontmatter.title || meta.title, slug: parsed.frontmatter.slug || meta.slug,
         summary: parsed.frontmatter.summary || "", status: parsed.frontmatter.status || meta.status,
         tag_ids: tags.filter((tag) => importedTags.includes(tag.name)).map((tag) => tag.id),
         series_id: importedSeries ? String(importedSeries.id) : "",
