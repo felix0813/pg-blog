@@ -1,15 +1,28 @@
 .seriesNavigation {
-  margin-top: 32px;
-  padding: 20px;
+  grid-area: series;
+  position: sticky;
+  top: 92px;
+  align-self: start;
+  max-height: calc(100vh - 116px);
+  overflow: auto;
+  padding: 16px;
   border: 1px solid var(--line);
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--accentSoft) 44%, var(--panelSolid));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--panelSolid) 82%, transparent);
 }
-.seriesNavigation h2 { margin: 0; }
+.seriesNavigation h2 { margin: 0; font-size: 20px; }
 .seriesNavigation > p:not(.eyebrow) { margin: 8px 0 0; color: var(--muted); }
-.seriesNavigation ol { display: grid; gap: 7px; margin: 16px 0; padding-left: 22px; }
-.seriesNavigation li { padding-left: 2px; }
+.seriesNavigation ol { display: grid; gap: 8px; margin: 16px 0; padding-left: 24px; }
+.seriesNavigation li { min-width: 0; padding-left: 2px; line-height: 1.45; }
+.seriesNavigation li::marker { color: var(--muted); font-variant-numeric: tabular-nums; }
+.seriesNavigation a, .seriesNavigation li > span { display: block; overflow-wrap: anywhere; }
 .seriesNavigation li.current { color: var(--accent); font-weight: 750; }
 .seriesNavigation a:hover { color: var(--accent); }
-.seriesPager { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 14px; border-top: 1px solid var(--line); }
+.seriesPager { display: grid; grid-template-columns: 1fr; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13px; }
 .seriesPager a:last-child { text-align: right; }
+
+@media (max-width: 1180px) {
+  .seriesNavigation { position: static; max-height: none; }
+  .seriesNavigation ol { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+  .seriesPager { grid-template-columns: 1fr 1fr; }
+}

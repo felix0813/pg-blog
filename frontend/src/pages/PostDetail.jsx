@@ -69,9 +69,11 @@ export function PostDetail() {
     published: '已发布',
     archived: '已归档',
   }
+  const hasSeries = Boolean(seriesData?.series && seriesData.items?.length)
 
   return (
-    <div className="articleLayout">
+    <div className={`articleLayout${hasSeries ? ' hasSeries' : ''}`}>
+    {hasSeries && <SeriesNavigation data={seriesData} currentPostID={post.id} />}
     <article className="article">
       <div className="sectionHeader">
         <div>
@@ -114,7 +116,6 @@ export function PostDetail() {
       {learningGoals !== null && <LearningStatus active={Object.prototype.hasOwnProperty.call(learningGoals, String(id))} lastLearnedAt={learningGoals[String(id)]} />}
       {post.summary && <p className="articleSummary">{post.summary}</p>}
       <RenderedPostContent html={post.content_html} onHeadingsChange={handleHeadingsChange} />
-      <SeriesNavigation data={seriesData} currentPostID={post.id} />
       {related.length > 0 && (
         <section className="relatedPosts">
           <h2>相关文章</h2>
