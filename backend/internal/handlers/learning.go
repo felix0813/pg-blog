@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -106,7 +107,8 @@ func (h *Handler) MarkLearned(c *gin.Context) {
 		return
 	}
 	postURL := learnedPostURL(c, postID)
-	if _, err := tx.Exec(c, `INSERT INTO daily_learning_records (user_id, content, urls) VALUES ($1, $2, jsonb_build_array($3))`, userID, "学习文章："+title, postURL); err != nil {
+	if _, err := tx.Exec(c, `INSERT INTO daily_learning_records (user_id, content, urls) VALUES ($1, $2, jsonb_build_array($3::text))`, userID, "学习文章："+title, postURL); err != nil {
+		log.Printf("add learned post %d to daily learning records for user %d: %v", postID, userID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "add daily learning record failed"})
 		return
 	}
