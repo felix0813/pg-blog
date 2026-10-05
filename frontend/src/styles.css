@@ -277,6 +277,12 @@ textarea { width: 100%; min-height: 92px; resize: vertical; }
 .article { max-width: 820px; margin: auto; }
 .rendered { line-height: 1.78; font-size: 17px; }
 .rendered img { max-width: 100%; border-radius: 16px; }
+.rendered code, .editorSurface .ProseMirror code { padding: 2px 5px; border-radius: 6px; background: var(--accentSoft); color: var(--accent); }
+.rendered pre, .editorSurface .ProseMirror pre { overflow-x: auto; margin: 1.4em 0; padding: 18px 20px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--panelSolid) 82%, var(--bg)); line-height: 1.65; }
+.rendered pre code, .editorSurface .ProseMirror pre code { padding: 0; border-radius: 0; background: transparent; color: inherit; font-size: .92em; }
+.rendered table, .editorSurface .ProseMirror table { display: block; width: 100%; overflow-x: auto; margin: 1.4em 0; border-collapse: collapse; }
+.rendered th, .rendered td, .editorSurface .ProseMirror th, .editorSurface .ProseMirror td { min-width: 120px; padding: 10px 12px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+.rendered th, .editorSurface .ProseMirror th { background: var(--accentSoft); font-weight: 700; }
 
 .editorPage { max-width: 1280px; margin: auto; }
 .settingsPage { max-width: 940px; margin: auto; }
@@ -313,7 +319,6 @@ textarea { width: 100%; min-height: 92px; resize: vertical; }
 .editorSurface .ProseMirror { min-height: 410px; outline: none; line-height: 1.72; }
 .editorSurface .ProseMirror p.is-editor-empty:first-child::before { color: var(--muted); content: attr(data-placeholder); float: left; height: 0; pointer-events: none; }
 .editorSurface .ProseMirror blockquote { margin-left: 0; padding-left: 16px; border-left: 4px solid var(--accent); color: var(--muted); }
-.editorSurface .ProseMirror code { padding: 2px 5px; border-radius: 6px; background: var(--accentSoft); color: var(--accent); }
 .editorSurface .ProseMirror ul, .editorSurface .ProseMirror ol { padding-left: 1.3rem; }
 
 .authPage { display: grid; place-items: center; min-height: 62vh; }

@@ -1,3 +1,11 @@
+import MarkdownIt from 'markdown-it'
+
+const markdownParser = new MarkdownIt({
+  html: false,
+  linkify: true,
+  typographer: false,
+})
+
 function escapeYAML(value = '') {
   return JSON.stringify(String(value))
 }
@@ -5,6 +13,10 @@ function escapeYAML(value = '') {
 function renderInline(content = []) {
   return content.map((node) => {
     if (node.type === 'hardBreak') return '  \n'
+    if (node.type === 'image') {
+      const title = node.attrs?.title ? ` ${JSON.stringify(node.attrs.title)}` : ''
+      return `![${node.attrs?.alt || ''}](${node.attrs?.src || ''}${title})`
+    }
     let text = node.text || ''
     for (const mark of node.marks || []) {
       if (mark.type === 'bold') text = `**${text}**`
@@ -26,6 +38,16 @@ function renderNode(node, depth = 0) {
     case 'bulletList': return content.map((item) => `${'  '.repeat(depth)}- ${renderInline(item.content?.[0]?.content || [])}\n`).join('') + '\n'
     case 'orderedList': return content.map((item, index) => `${'  '.repeat(depth)}${index + 1}. ${renderInline(item.content?.[0]?.content || [])}\n`).join('') + '\n'
     case 'codeBlock': return `\`\`\`${node.attrs?.language || ''}\n${renderInline(content)}\n\`\`\`\n\n`
+    case 'table': {
+      const rows = content.map((row) => (row.content || []).map((cell) => {
+        const value = (cell.content || []).map((item) => renderInline(item.content || [])).join('<br>')
+        return value.replace(/\|/g, '\\|')
+      }))
+      if (!rows.length) return ''
+      const width = Math.max(...rows.map((row) => row.length))
+      const formatRow = (row) => `| ${Array.from({ length: width }, (_, index) => row[index] || '').join(' | ')} |\n`
+      return formatRow(rows[0]) + formatRow(Array(width).fill('---')) + rows.slice(1).map(formatRow).join('') + '\n'
+    }
     default: return content.map((item) => renderNode(item, depth)).join('')
   }
 }
@@ -65,33 +87,5 @@ function parseFrontmatter(markdown) {
 
 export function markdownToPost(markdown) {
   const [frontmatter, body] = parseFrontmatter(markdown.replace(/\r\n/g, '\n'))
-  const lines = body.split('\n')
-  const content = []
-  let index = 0
-  while (index < lines.length) {
-    const line = lines[index]
-    if (!line.trim()) { index += 1; continue }
-    const fence = line.match(/^```(.*)$/)
-    if (fence) {
-      const code = []
-      index += 1
-      while (index < lines.length && !lines[index].startsWith('```')) code.push(lines[index++])
-      if (index < lines.length) index += 1
-      content.push({ type: 'codeBlock', attrs: { language: fence[1].trim() || 'text' }, content: code.length ? [{ type: 'text', text: code.join('\n') }] : [] })
-      continue
-    }
-    const heading = line.match(/^(#{1,3})\s+(.+)$/)
-    if (heading) { content.push({ type: 'heading', attrs: { level: heading[1].length }, content: [{ type: 'text', text: heading[2] }] }); index += 1; continue }
-    const quote = line.match(/^>\s?(.*)$/)
-    if (quote) { content.push({ type: 'blockquote', content: [{ type: 'paragraph', content: quote[1] ? [{ type: 'text', text: quote[1] }] : [] }] }); index += 1; continue }
-    const bullet = line.match(/^[-*]\s+(.+)$/)
-    if (bullet) { content.push({ type: 'bulletList', content: [{ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: bullet[1] }] }] }] }); index += 1; continue }
-    const ordered = line.match(/^\d+\.\s+(.+)$/)
-    if (ordered) { content.push({ type: 'orderedList', content: [{ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: ordered[1] }] }] }] }); index += 1; continue }
-    const paragraph = [line]
-    index += 1
-    while (index < lines.length && lines[index].trim() && !/^```|^(#{1,3})\s|^>\s|^[-*]\s|^\d+\.\s/.test(lines[index])) paragraph.push(lines[index++])
-    content.push({ type: 'paragraph', content: [{ type: 'text', text: paragraph.join('\n') }] })
-  }
-  return { frontmatter, content: { type: 'doc', content: content.length ? content : [{ type: 'paragraph' }] } }
+  return { frontmatter, content: markdownParser.render(body) }
 }

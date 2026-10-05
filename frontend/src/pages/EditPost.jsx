@@ -30,6 +30,7 @@ import { insertMermaidBlock, continueWritingAfterCode } from '../lib/editorBlock
 import { PostPreviewModal } from '../components/PostPreviewModal.jsx'
 import { RevisionHistory } from '../components/RevisionHistory.jsx'
 import { markdownToPost, postToMarkdown } from '../lib/markdown.js'
+import { markdownExtensions } from '../lib/markdownExtensions.js'
 import { useUnsavedPostChanges } from '../lib/useUnsavedPostChanges.js'
 import { deleteDraft, getDraft, saveDraft } from '../lib/draftStorage.js'
 
@@ -72,6 +73,7 @@ export function EditPost({ user }) {
           tabSize: 2,
         },
       }),
+      ...markdownExtensions,
       Link.configure({ openOnClick: false }),
       Placeholder.configure({ placeholder: '开始写作...' }),
     ],

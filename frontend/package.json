@@ -10,6 +10,7 @@
     "test": "node --test src/lib/diagramRenderers.test.js src/lib/editorBlocks.test.js src/lib/postSnapshot.test.js src/lib/postFilters.test.js src/lib/articleOutline.test.js src/lib/markdown.test.js src/lib/searchHighlight.test.js src/lib/draftStorage.test.js src/lib/learningGoals.test.js"
   },
   "dependencies": {
+    "@tiptap/core": "^2.5.8",
     "@tiptap/extension-link": "^2.5.8",
     "@tiptap/extension-placeholder": "^2.5.8",
     "@tiptap/pm": "^2.5.8",
@@ -18,6 +19,7 @@
     "dompurify": "^3.1.6",
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.468.0",
+    "markdown-it": "^14.1.0",
     "mermaid": "^12.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
