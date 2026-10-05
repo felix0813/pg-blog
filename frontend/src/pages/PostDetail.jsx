@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { del, get, post } from '../lib/api.js'
+import { del, get, post as postRequest } from '../lib/api.js'
 import { LearningStatus } from '../components/LearningStatus.jsx'
 import { learningGoalMap } from '../lib/learningGoals.js'
 import { QuillIcon } from '../components/Icons.jsx'
@@ -37,7 +37,7 @@ export function PostDetail() {
         await del("/api/posts/" + id + "/learning-goal")
         setLearningGoals((items) => { const next = { ...items }; delete next[String(id)]; return next })
       } else {
-        const data = await post("/api/posts/" + id + "/learning-goal", {})
+        const data = await postRequest("/api/posts/" + id + "/learning-goal", {})
         setLearningGoals((items) => ({ ...items, [String(id)]: data.last_learned_at || null }))
       }
     } catch (err) { setError(err.message) }
@@ -45,7 +45,7 @@ export function PostDetail() {
 
   async function markLearned() {
     try {
-      const data = await post("/api/posts/" + id + "/learned", {})
+      const data = await postRequest("/api/posts/" + id + "/learned", {})
       setLearningGoals((items) => ({ ...items, [String(id)]: data.last_learned_at }))
     } catch (err) { setError(err.message) }
   }
