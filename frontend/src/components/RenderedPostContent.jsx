@@ -2,6 +2,7 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 import DOMPurify from 'dompurify'
 import { DiagramBlock } from './DiagramBlock.jsx'
+import { createHeadingId } from '../lib/articleOutline.js'
 import { MAX_DIAGRAMS_PER_POST, normalizeDiagramLanguage, supportsDiagramLanguage } from '../lib/diagramRenderers.js'
 
 function useDocumentTheme() {
